@@ -1253,8 +1253,7 @@
         
         let msInput = document.getElementById('input-ms');
         let msValue = msInput ? msInput.value.trim() : '';
-        if (!msValue || msValue.length !== 5) return alert("Nhập 5 số MS!");
-        
+             
         let printMonday = getMonday(new Date(printDateStr));
         let ms = msValue;
         let now = new Date();
