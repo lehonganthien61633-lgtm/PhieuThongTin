@@ -1036,7 +1036,6 @@
     generateCaptcha(); 
 
     // [BẮT ĐẦU SỬA: Module Xử Lý Thời Gian và Lệnh In Phiếu]
-    // [BẮT ĐẦU SỬA: Module Xử Lý Thời Gian và Lệnh In Phiếu]
     function toggleMenu() { document.getElementById("myDropdown").classList.toggle("show"); }
     window.onclick = function(event) {
         if (!event.target.matches('.menu-btn')) {
@@ -1089,6 +1088,17 @@
         return result;
     }
 
+    // Hàm tạo MS ngẫu nhiên 5 số không trùng lặp (Đã fix lỗi map)
+    function generateUniqueMS() {
+        let historyArray = Array.isArray(printHistory) ? printHistory : Object.values(printHistory || {});
+        let usedMS = historyArray.map(h => h.ms).filter(m => m !== undefined);
+        let ms;
+        do {
+            ms = String(Math.floor(Math.random() * 100000)).padStart(5, '0');
+        } while (usedMS.includes(ms));
+        return ms;
+    }
+
     const inputTuNgay = document.getElementById("input-tu-ngay");
     inputTuNgay.addEventListener('change', function() {
         if (!this.value) return;
@@ -1101,7 +1111,7 @@
 
         let monday = getMonday(selectedDate);
         if (monday > maxMonday) {
-            alert("Bạn chỉ được phép lập kế hoạch tối đa đến tuần kế tiếp!");
+            alert("Bạn chỉ được phép chọn tối đa đến tuần kế tiếp!");
             monday = maxMonday;
         }
 
@@ -1140,12 +1150,16 @@
         if(!activeUserPhone) return;
         try {
             let res = await fetch(`${BASE_DATA_URL}${activeUserPhone}.json`);
-            printHistory = [];
             if (res.ok) {
                 let data = await res.json();
+                // Bắt buộc ép kiểu mảng để chặn lỗi crash JS
                 if (data && data.printHistory) {
-                    printHistory = data.printHistory;
+                    printHistory = Array.isArray(data.printHistory) ? data.printHistory : Object.values(data.printHistory);
+                } else {
+                    printHistory = [];
                 }
+            } else {
+                printHistory = [];
             }
             renderPrintHistory();
             let statusEl = document.getElementById('save-status');
@@ -1170,6 +1184,9 @@
             status.innerText = "(Đang lưu...)";
             status.style.color = "#f39c12";
         }
+
+        // Chắc chắn là mảng
+        if (!Array.isArray(printHistory)) printHistory = Object.values(printHistory || {});
 
         let payload = {
             printHistory: printHistory,
@@ -1205,13 +1222,16 @@
     function renderPrintHistory() {
         const tbody = document.getElementById('print-history-tbody');
         tbody.innerHTML = '';
-        if (printHistory.length === 0) {
+        
+        let historyArray = Array.isArray(printHistory) ? printHistory : Object.values(printHistory || {});
+
+        if (historyArray.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="color:#666; font-style:italic;">Chưa có bản in nào.</td></tr>';
             return;
         }
         
-        for (let i = printHistory.length - 1; i >= 0; i--) {
-            let hist = printHistory[i];
+        for (let i = historyArray.length - 1; i >= 0; i--) {
+            let hist = historyArray[i];
             let tr = document.createElement('tr');
             
             tr.innerHTML = `
@@ -1242,14 +1262,20 @@
         let printDateStr = document.getElementById('input-tu-ngay').value;
         if (!printDateStr) return alert("Vui lòng chọn tuần để in!");
         
-        let printMonday = getMonday(new Date(printDateStr));
+        // Parse ngày an toàn tránh lỗi múi giờ
+        let parts = printDateStr.split('-');
+        let printMonday = getMonday(new Date(parts[0], parts[1] - 1, parts[2]));
         
         let asciiCode = generateASCIICode(12);
-        let ms = generateUniqueMS(); // Hệ thống tự động sinh ra mã MS 5 số không trùng
+        let ms = generateUniqueMS(); 
         let now = new Date();
         let printTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
         let printDate = formatDisplayDate(now);
         let fullTimeStr = printTime + ' | ' + printDate;
+
+        if (!Array.isArray(printHistory)) {
+            printHistory = Object.values(printHistory || {});
+        }
 
         printHistory.push({
             timeStr: fullTimeStr,
@@ -1265,18 +1291,30 @@
         updateTimeData(printMonday);
         updateDOMForPrint(asciiCode, ms, false);
         
-        setTimeout(() => window.print(), 300);
+        setTimeout(() => window.print(), 500);
     }
 
     function reprint(index) {
-        let hist = printHistory[index];
-        let printMonday = getMonday(new Date(hist.dateStr));
+        let historyArray = Array.isArray(printHistory) ? printHistory : Object.values(printHistory || {});
+        let hist = historyArray[index];
+        if(!hist) return;
+        
+        let parts = hist.dateStr.split('-');
+        let printMonday = getMonday(new Date(parts[0], parts[1] - 1, parts[2]));
         
         updateTimeData(printMonday);
         updateDOMForPrint(hist.asciiCode, hist.ms || '00000', true);
         
-        setTimeout(() => window.print(), 300);
+        setTimeout(() => window.print(), 500);
     }
+
+    // Chặn sự kiện Ctrl + P để gọi hàm in tùy chỉnh thay vì in trực tiếp màn hình hiện tại
+    document.addEventListener('keydown', function(event) {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'p') {
+            event.preventDefault();
+            executePrint();
+        }
+    });
 
     async function startApp() { 
         const currentMonday = getMonday(getGMT7Date());
@@ -1295,7 +1333,6 @@
         updateTimeData(targetMonday);
     }
     // [KẾT THÚC SỬA]
-</script>
 </script>
 </body>
 </html>
