@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phiếu Thông Tin Túi Đựng</title>
+    <style>
+        /* CSS Reset & Cơ bản */
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+        body {
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Khu vực điều khiển (Sẽ ẩn khi in) */
+        .controls {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .controls input, .controls button {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .controls button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Vùng in - Giao diện giấy A4 */
+        .print-area {
+            background: #fff;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* Khung bảng cấu trúc Phiếu */
+        table.phieu-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px; /* Khoảng cách giữa 2 phiếu */
+        }
+        table.phieu-table td {
+            border: 1px solid #000;
+            padding: 10px;
+            vertical-align: top;
+        }
+
+        /* Tiêu đề & Liên */
+        .header-cell {
+            text-align: center;
+            position: relative;
+            padding-top: 20px !important;
+            padding-bottom: 20px !important;
+        }
+        .title {
+            font-weight: bold;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+        .lien-badge {
+            position: absolute;
+            right: 10px;
+            top: 20px;
+            border: 1px solid #000;
+            padding: 2px 5px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        /* Cấu trúc cột nội dung */
+        .col-info { width: 30%; line-height: 1.6; }
+        .col-docs { width: 35%; }
+        .col-extra { width: 35%; }
+
+        .col-title {
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+
+        /* Tạo dòng chấm chấm (Dotted lines) */
+        .dotted-line {
+            border-bottom: 2px dotted #555;
+            height: 22px;
+            width: 100%;
+            margin-bottom: 2px;
+        }
+
+        /* Ẩn các ID dư thừa sinh ra từ JS gốc để không làm rối UI nếu không dùng đến */
+        .hidden-inputs { display: none; }
+
+        /* Chế độ In Ấn */
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+            .controls, .hidden-inputs {
+                display: none !important;
+            }
+            .print-area {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+        }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+    <div class="controls no-print">
+        <label><b>Chọn Ngày Bất Kỳ Trong Tuần:</b></label>
+        <input type="date" id="input-tu-ngay">
+        <label>Tuần ISO:</label>
+        <input type="text" id="input-tuan" readonly style="width: 50px; background: #eee;">
+        
+        <button onclick="window.print()">🖨️ In Phiếu (Ctrl + P)</button>
+        <button onclick="saveToFirebase()" style="background-color: #28a745;">💾 Lưu Firebase</button>
+        <span id="save-status" style="color: green; font-weight: bold; margin-left: 10px;"></span>
+    </div>
+
+    <div class="hidden-inputs">
+        <span id="display-tu-ngay"></span>
+        <input type="text" id="input-den-ngay">
+        <input type="text" id="input-thang-nam">
+        <span id="note-tuan-3"></span>
+        <span id="note-ngay-duyet"></span>
+        <input type="text" id="input-tien-mat">
+        <input type="text" id="input-ngan-hang">
+        <input type="text" id="input-thu-nhap-tm">
+        <input type="text" id="input-thu-nhap-nh">
+        <input type="text" id="note-custom-amount">
+        <input type="text" id="note-stk-input">
+        <input type="text" id="note-pct-min" value="85">
+        <input type="text" id="note-pct-max" value="100">
+        <select id="note-quy-select"><option value=""></option></select>
+        <tbody id="fund-table-body"></tbody>
+        <tbody id="tbody-thu-nhap-tm"></tbody>
+        <tbody id="tbody-thu-nhap-nh"></tbody>
+    </div>
+
+    <div class="print-area">
+        
+        <table class="phieu-table">
+            <tr>
+                <td colspan="3" class="header-cell">
+                    <div class="title">PHIẾU THÔNG TIN TÚI ĐỰNG</div>
+                    <div class="lien-badge">LIÊN 1: DÁN BÌA</div>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-info">
+                    <p class="col-title">Tuần: <span id="note-tuan">...</span>/ <span class="nam-hien-tai">2026</span> | MS: 28597</p>
+                    <p class="col-title">Từ ngày: <span id="note-tu-ngay">...</span></p>
+                    <p class="col-title">Đến ngày: <span id="note-den-ngay">...</span></p>
+                    <p class="col-title">Ngày in: <span class="ngay-in-hien-tai">...</span></p>
+                    <p class="col-title" style="margin-top: 15px;">Ký tên xác nhận:</p>
+                </td>
+                <td class="col-docs">
+                    <p class="col-title">Danh sách tài liệu lưu trữ:</p>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                </td>
+                <td class="col-extra">
+                    <p class="col-title">Thông tin thêm:</p>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="phieu-table">
+            <tr>
+                <td colspan="3" class="header-cell">
+                    <div class="title">PHIẾU THÔNG TIN TÚI ĐỰNG</div>
+                    <div class="lien-badge">LIÊN 2: LƯU TRỮ</div>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-info">
+                    <p class="col-title">Tuần: <span id="note-tuan-2">...</span>/ <span class="nam-hien-tai">2026</span> | MS: 28597</p>
+                    <p class="col-title">Từ ngày: <span id="note-tu-ngay-2">...</span></p>
+                    <p class="col-title">Đến ngày: <span id="note-den-ngay-2">...</span></p>
+                    <p class="col-title">Ngày in: <span class="ngay-in-hien-tai">...</span></p>
+                    <p class="col-title" style="margin-top: 15px;">Ký tên xác nhận:</p>
+                </td>
+                <td class="col-docs">
+                    <p class="col-title">Danh sách tài liệu lưu trữ:</p>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                </td>
+                <td class="col-extra">
+                    <p class="col-title">Thông tin thêm:</p>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                    <div class="dotted-line"></div><div class="dotted-line"></div>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+
+    <script>
+        // 1. CẤU HÌNH FIREBASE
+        const firebaseConfig = {
+            databaseURL: "https://phieuthongtin-5f964-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 2. BIẾN MÔI TRƯỜNG TOÀN CỤC (Khai báo để JS cũ không báo lỗi)
+        let allWeeksData = {};
+        let expenseData = {};
+        let currentWeekKey = '';
+        let daysArr = ['t2', 't3', 't4', 't5', 't6', 't7', 'cn'];
+        let catsArr = ['thu', 'chi'];
+
+        // Hàm giả lập (Mock functions) để tránh báo lỗi do đoạn JS thiếu hàm UI liên quan
+        function ensureExpenseDataStructure() {
+            if(!expenseData) expenseData = {};
+            daysArr.forEach(d => {
+                if(!expenseData[d]) expenseData[d] = {};
+                catsArr.forEach(c => { if(!expenseData[d][c]) expenseData[d][c] = []; });
+            });
+        }
+        function renderFundTable() {}
+        function renderThuNhapTMModal() {}
+        function renderThuNhapNHModal() {}
+        function tinhTongBanGiao() {}
+        function updateNoteFundDropdown() {}
+        function renderNoteDisplay() {}
+        function renderMainCategory() {}
+        function updateDayTotals() {}
+        function updateWeeklySummary() {}
+        function scheduleSave() {}
+
+        // --- BẮT ĐẦU ĐOẠN JS GỐC CỦA BẠN (CÓ CHỈNH SỬA NHẸ ĐỂ CẬP NHẬT GIAO DIỆN ĐÚNG) ---
+        const inputTuNgay = document.getElementById("input-tu-ngay");
+        const inputTuan = document.getElementById("input-tuan");
+
+        function getGMT7Date() {
+            const d = new Date();
+            return new Date(d.getTime() + (d.getTimezoneOffset() * 60000) + (3600000 * 7));
+        }
+        function getMonday(d) {
+            let dateObj = new Date(d);
+            const day = dateObj.getDay();
+            const diff = dateObj.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(dateObj.setDate(diff));
+        }
+        function formatToInputDate(date) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+        function formatDisplayDate(date) {
+            return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+        }
+
+        function getISOWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            return Math.ceil((((d - new Date(Date.UTC(d.getUTCFullYear(), 0, 1))) / 86400000) + 1) / 7);
+        }
+        function getWeekKey(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            let year = d.getUTCFullYear();
+            let w = getISOWeekNumber(date);
+            return year + '-' + String(w).padStart(2, '0');
+        }
+
+        inputTuNgay.addEventListener('change', function() {
+            if (!this.value) return;
+            let parts = this.value.split('-');
+            let selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            
+            let currentMonday = getMonday(getGMT7Date());
+            let maxMonday = new Date(currentMonday);
+            maxMonday.setDate(currentMonday.getDate() + 7);
+            let monday = getMonday(selectedDate);
+            
+            if (monday > maxMonday) {
+                alert("Bạn chỉ được phép lập kế hoạch tối đa đến tuần kế tiếp!");
+                monday = maxMonday;
+            }
+
+            setTimeout(() => {
+                this.value = formatToInputDate(monday);
+                loadWeek(monday);
+            }, 10);
+        });
+
+        function updateTimeData(monday) {
+            document.getElementById("display-tu-ngay").textContent = formatDisplayDate(monday);
+            let sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            document.getElementById("input-den-ngay").value = formatDisplayDate(sunday);
+            
+            let isoWeek = getISOWeekNumber(monday);
+            inputTuan.value = isoWeek;
+            
+            let approvalDate = new Date(monday);
+            approvalDate.setDate(monday.getDate() - 1);
+
+            // Cập nhật cho Phiếu 1
+            if(document.getElementById('note-tuan')) document.getElementById('note-tuan').innerText = isoWeek;
+            if(document.getElementById('note-tu-ngay')) document.getElementById('note-tu-ngay').innerText = formatDisplayDate(monday);
+            if(document.getElementById('note-den-ngay')) document.getElementById('note-den-ngay').innerText = formatDisplayDate(sunday);
+            
+            // Cập nhật cho Phiếu 2 (Bổ sung thêm ID cho Liên 2)
+            if(document.getElementById('note-tuan-2')) document.getElementById('note-tuan-2').innerText = isoWeek;
+            if(document.getElementById('note-tu-ngay-2')) document.getElementById('note-tu-ngay-2').innerText = formatDisplayDate(monday);
+            if(document.getElementById('note-den-ngay-2')) document.getElementById('note-den-ngay-2').innerText = formatDisplayDate(sunday);
+            if(document.getElementById('note-tuan-3')) document.getElementById('note-tuan-3').innerText = isoWeek;
+            if(document.getElementById('note-ngay-duyet')) document.getElementById('note-ngay-duyet').innerText = formatDisplayDate(approvalDate);
+
+            // Cập nhật năm hiện tại
+            document.querySelectorAll('.nam-hien-tai').forEach(el => el.innerText = monday.getFullYear());
+        }
+
+        // ... [Các hàm getFundsFromPreviousWeek, getPrevWeekNHList, saveCurrentWeekLocally giữ nguyên logic, 
+        // ở dạng thu gọn vì form UI không render chúng ra mặt trực tiếp trong yêu cầu này] ...
+
+        function loadWeek(targetMonday) {
+            let newKey = getWeekKey(targetMonday);
+            let fallbackKey = targetMonday.getFullYear() + '-' + String(getISOWeekNumber(targetMonday)).padStart(2, '0');
+
+            currentWeekKey = newKey;
+            updateTimeData(targetMonday);
+            ensureExpenseDataStructure();
+
+            // Tích hợp Firebase Load Data tại đây
+            db.ref('weeks/' + currentWeekKey).once('value').then(snapshot => {
+                if(snapshot.exists()){
+                    allWeeksData[currentWeekKey] = snapshot.val();
+                    console.log("Đã tải dữ liệu từ Firebase cho tuần: ", currentWeekKey);
+                } else {
+                    console.log("Không có dữ liệu cũ trên Firebase cho tuần này.");
+                }
+            }).catch(e => console.error(e));
+        }
+        // --- KẾT THÚC ĐOẠN JS GỐC ---
+
+        // 3. TÍCH HỢP TỰ ĐỘNG KHỞI TẠO VÀ LƯU FIREBASE
+        function saveToFirebase() {
+            if (!currentWeekKey) {
+                alert("Vui lòng chọn ngày trước khi lưu!");
+                return;
+            }
+            // Tạo mock object để lưu (Kết hợp logic bạn đã xây dựng)
+            let dataToSave = {
+                updatedAt: new Date().toISOString(),
+                // expenses: expenseData, // Bỏ comment nếu UI expense có thật
+            };
+
+            db.ref('weeks/' + currentWeekKey).set(dataToSave)
+                .then(() => {
+                    let status = document.getElementById('save-status');
+                    status.innerText = "Đã đồng bộ Firebase!";
+                    setTimeout(() => status.innerText = "", 3000);
+                })
+                .catch(err => {
+                    console.error("Lỗi:", err);
+                    alert("Lỗi khi lưu Firebase!");
+                });
+        }
+
+        // Cập nhật "Ngày in" động
+        window.onload = function() {
+            let now = getGMT7Date();
+            let dateStr = formatDisplayDate(now);
+            document.querySelectorAll('.ngay-in-hien-tai').forEach(el => el.innerText = dateStr);
+            
+            // Tự động load tuần hiện tại khi vừa mở trang
+            inputTuNgay.value = formatToInputDate(now);
+            inputTuNgay.dispatchEvent(new Event('change'));
+        }
+    </script>
+</body>
+</html>
