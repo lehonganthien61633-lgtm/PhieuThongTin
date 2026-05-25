@@ -999,7 +999,7 @@
     loadAuthDB();
     generateCaptcha(); 
 
-    // --- MAIN APP JAVASCRIPT ---
+    // [BẮT ĐẦU SỬA: Module Xử Lý Thời Gian và Lệnh In Phiếu]
     function toggleMenu() { document.getElementById("myDropdown").classList.toggle("show"); }
     window.onclick = function(event) {
         if (!event.target.matches('.menu-btn')) {
@@ -1021,24 +1021,28 @@
         const d = new Date();
         return new Date(d.getTime() + (d.getTimezoneOffset() * 60000) + (3600000 * 7));
     }
+    
     function getMonday(d) {
         let dateObj = new Date(d);
         const day = dateObj.getDay();
         const diff = dateObj.getDate() - day + (day === 0 ? -6 : 1);
         return new Date(dateObj.setDate(diff));
     }
+    
     function formatToInputDate(date) {
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     }
+    
     function formatDisplayDate(date) {
         return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
     }
+    
     function getISOWeekNumber(date) {
         const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
         d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
         return Math.ceil((((d - new Date(Date.UTC(d.getUTCFullYear(), 0, 1))) / 86400000) + 1) / 7);
     }
-    // [BẮT ĐẦU SỬA: Module Lệnh In Kế Hoạch - Bổ sung MS ngẫu nhiên] //
+    
     function generateASCIICode(length) {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let result = '';
@@ -1058,22 +1062,122 @@
         return ms;
     }
 
-    function updateInNgayDisplay() {
-        let val = document.getElementById('input-in-ngay').value;
-        if(val) {
-            let selectedDate = new Date(val);
-            let currentMonday = getMonday(getGMT7Date());
-            let maxMonday = new Date(currentMonday);
-            maxMonday.setDate(currentMonday.getDate() + 7);
+    const inputTuNgay = document.getElementById("input-tu-ngay");
+    inputTuNgay.addEventListener('change', function() {
+        if (!this.value) return;
+        let parts = this.value.split('-');
+        let selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        
+        let currentMonday = getMonday(getGMT7Date());
+        let maxMonday = new Date(currentMonday);
+        maxMonday.setDate(currentMonday.getDate() + 7);
 
-            let mon = getMonday(selectedDate);
-            if (mon > maxMonday) {
-                alert("Chỉ được phép chọn tối đa đến tuần kế tiếp!");
-                mon = maxMonday;
+        let monday = getMonday(selectedDate);
+        if (monday > maxMonday) {
+            alert("Bạn chỉ được phép lập kế hoạch tối đa đến tuần kế tiếp!");
+            monday = maxMonday;
+        }
+
+        setTimeout(() => {
+            this.value = formatToInputDate(monday);
+            updateTimeData(monday);
+        }, 10);
+    });
+
+    function updateTimeData(monday) {
+        document.getElementById("display-tu-ngay").textContent = formatDisplayDate(monday);
+        let sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        
+        let isoWeek = getISOWeekNumber(monday);
+        document.getElementById("input-tuan").value = isoWeek;
+
+        // Cập nhật DOM in ấn
+        if(document.getElementById('note-tuan')) document.getElementById('note-tuan').innerText = isoWeek;
+        if(document.getElementById('note-tuan-2')) document.getElementById('note-tuan-2').innerText = isoWeek;
+        if(document.getElementById('note-tu-ngay')) document.getElementById('note-tu-ngay').innerText = formatDisplayDate(monday);
+        if(document.getElementById('note-tu-ngay-2')) document.getElementById('note-tu-ngay-2').innerText = formatDisplayDate(monday);
+        if(document.getElementById('note-den-ngay')) document.getElementById('note-den-ngay').innerText = formatDisplayDate(sunday);
+        if(document.getElementById('note-den-ngay-2')) document.getElementById('note-den-ngay-2').innerText = formatDisplayDate(sunday);
+
+        document.querySelectorAll('.nam-hien-tai').forEach(el => el.innerText = monday.getFullYear());
+        document.querySelectorAll('.ngay-in-hien-tai').forEach(el => el.innerText = formatDisplayDate(getGMT7Date()));
+        
+        // Reset watermark & ASCII khi đổi ngày (chưa in)
+        document.querySelectorAll('.ascii-display').forEach(el => el.innerText = "");
+        document.querySelectorAll('.reprint-watermark').forEach(el => el.innerHTML = "");
+        
+        // Xóa tạm mã MS cứng để chờ gán MS mới khi ấn In
+        document.querySelectorAll('.col-title').forEach(el => {
+            if (el.innerHTML.includes('MS:')) {
+                el.innerHTML = el.innerHTML.replace(/MS:\s*(\d+|-----)/, 'MS: -----');
             }
+        });
+    }
 
-            document.getElementById('display-in-ngay').innerText = formatDisplayDate(mon);
-            document.getElementById('input-in-ngay').value = formatToInputDate(mon);
+    async function loadFromFirebase() {
+        if(!activeUserPhone) return;
+        try {
+            let res = await fetch(`${BASE_DATA_URL}${activeUserPhone}.json`);
+            printHistory = [];
+            if (res.ok) {
+                let data = await res.json();
+                if (data && data.printHistory) {
+                    printHistory = data.printHistory;
+                }
+            }
+            renderPrintHistory();
+            let statusEl = document.getElementById('save-status');
+            if(statusEl) {
+                statusEl.innerText = "(Đã tải lịch sử)";
+                statusEl.style.color = "#2ecc71";
+            }
+        } catch(e) { 
+            console.error(e); 
+            let statusEl = document.getElementById('save-status');
+            if(statusEl) {
+                statusEl.innerText = "(Lỗi kết nối)";
+                statusEl.style.color = "#e74c3c";
+            }
+        }
+    }
+
+    async function saveToFirebase() {
+        if(!activeUserPhone) return;
+        let status = document.getElementById('save-status');
+        if(status) {
+            status.innerText = "(Đang lưu...)";
+            status.style.color = "#f39c12";
+        }
+
+        let payload = {
+            printHistory: printHistory,
+            updatedAt: new Date().toISOString()
+        };
+        try {
+            let res = await fetch(`${BASE_DATA_URL}${activeUserPhone}.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                if(status) {
+                    status.innerText = "(Đã lưu)";
+                    status.style.color = "#2ecc71";
+                    setTimeout(() => status.innerText = "", 3000);
+                }
+            } else {
+                if(status) {
+                    status.innerText = "(Lưu thất bại)";
+                    status.style.color = "#e74c3c";
+                }
+            }
+        } catch(e) { 
+            console.error("Firebase save error", e); 
+            if(status) {
+                status.innerText = "(Lỗi kết nối)";
+                status.style.color = "#e74c3c";
+            }
         }
     }
 
@@ -1081,7 +1185,7 @@
         const tbody = document.getElementById('print-history-tbody');
         tbody.innerHTML = '';
         if (printHistory.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="color:#666; font-style:italic;">Chưa có bản in nào.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="color:#666; font-style:italic;">Chưa có bản in nào.</td></tr>';
             return;
         }
         
@@ -1096,8 +1200,7 @@
                 <td>${i + 1}</td>
                 <td style="font-weight: bold;">${hist.timeStr}</td>
                 <td>Tuần ${hist.week}</td>
-                <td>${hist.week}-${hist.pVer || 0}/D01/TTQLDT-VPKHCT<br><span style="color:#d32f2f; font-weight:bold;">MS: ${hist.ms || 'N/A'}</span></td>
-                <td style="font-family: monospace; font-size: 16px;">${hist.asciiCode}</td>
+                <td><span style="color:#d32f2f; font-weight:bold;">MS: ${hist.ms || 'N/A'}</span><br><span style="font-family: monospace; font-size: 13px;">${hist.asciiCode}</span></td>
                 <td>
                     <input type="checkbox" ${isCancelled ? 'checked disabled' : `onclick="openCancelModal(${i}); return false;"`} style="width:20px; height:20px; cursor:pointer;">
                 </td>
@@ -1132,415 +1235,85 @@
                 date: cDate,
                 reason: cReason
             };
-            scheduleSave();
+            saveToFirebase();
             renderPrintHistory();
             document.getElementById('modal-cancel-print').style.display = 'none';
             alert('Đã hủy bản in thành công!');
         }
     }
 
+    function updateDOMForPrint(asciiCode, ms, isReprint = false) {
+        document.querySelectorAll('.ascii-display').forEach(el => el.innerText = "Mã đối soát: " + asciiCode);
+        document.querySelectorAll('.col-title').forEach(el => {
+            if (el.innerHTML.includes('MS:')) {
+                el.innerHTML = el.innerHTML.replace(/MS:\s*(\d+|-----)/, 'MS: ' + ms);
+            }
+        });
+        
+        if (isReprint) {
+            document.querySelectorAll('.reprint-watermark').forEach(el => el.innerHTML = `BẢN SAO <br><span style="font-size:11px;">Thời gian in lại: ${new Date().toLocaleString('vi-VN')}</span>`);
+        } else {
+            document.querySelectorAll('.reprint-watermark').forEach(el => el.innerHTML = "");
+        }
+    }
+
     function executePrint() {
-        let printDateStr = document.getElementById('input-in-ngay').value;
+        let printDateStr = document.getElementById('input-tu-ngay').value;
         if (!printDateStr) return alert("Vui lòng chọn tuần để in!");
         let printMonday = getMonday(new Date(printDateStr));
         
-        saveCurrentWeekLocally();
-        let weekKey = getWeekKey(printMonday);
-        
-        // MSLT Logic tracking
-        let currentDataStr = JSON.stringify({
-            exp: expenseData,
-            funds: allWeeksData[weekKey]?.funds || [],
-            notes: allWeeksData[weekKey]?.notesState || {},
-            tm: document.getElementById('input-tien-mat').value,
-            nh: document.getElementById('input-ngan-hang').value
+        let asciiCode = generateASCIICode(12);
+        let ms = generateUniqueMS();
+        let now = new Date();
+        let printTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+        let printDate = formatDisplayDate(now);
+        let fullTimeStr = printTime + ' | ' + printDate;
+
+        printHistory.push({
+            timeStr: fullTimeStr,
+            week: getISOWeekNumber(printMonday),
+            dateStr: formatToInputDate(printMonday),
+            asciiCode: asciiCode,
+            ms: ms
         });
         
-        let pVer = 0;
-        if (allWeeksData[weekKey].printVersion === undefined) {
-            allWeeksData[weekKey].printVersion = 0;
-            allWeeksData[weekKey].lastPrintedDataHash = currentDataStr;
-        } else {
-            if (allWeeksData[weekKey].lastPrintedDataHash !== currentDataStr) {
-                allWeeksData[weekKey].printVersion++;
-                allWeeksData[weekKey].lastPrintedDataHash = currentDataStr;
-            }
-            pVer = allWeeksData[weekKey].printVersion;
-        }
+        saveToFirebase();
+        renderPrintHistory();
 
-        loadWeek(printMonday);
+        updateTimeData(printMonday);
+        updateDOMForPrint(asciiCode, ms, false);
         
-        setTimeout(() => {
-            let asciiCode = generateASCIICode(12);
-            let ms = generateUniqueMS(); // Tạo MS Ngẫu nhiên
-            let now = new Date();
-            let printTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
-            let printDate = formatDisplayDate(now);
-            let fullTimeStr = printTime + ' | ' + printDate;
-
-            printHistory.push({
-                timeStr: fullTimeStr,
-                week: getISOWeekNumber(printMonday),
-                dateStr: formatToInputDate(printMonday),
-                asciiCode: asciiCode,
-                pVer: pVer,
-                ms: ms // Lưu trữ MS vào History
-            });
-            scheduleSave();
-            renderPrintHistory();
-
-            doPrint(printMonday, asciiCode, printTime, printDate, pVer, false, null, ms);
-        }, 100);
+        setTimeout(() => window.print(), 300);
     }
 
     function reprint(index) {
         let hist = printHistory[index];
         let printMonday = getMonday(new Date(hist.dateStr));
-        saveCurrentWeekLocally();
-        loadWeek(printMonday);
         
-        let parts = hist.timeStr.split(' | ');
-        let timeStr = parts[0] || '';
-        let dateDisplayStr = parts[1] || '';
-
-        setTimeout(() => {
-            doPrint(printMonday, hist.asciiCode, timeStr, dateDisplayStr, hist.pVer || 0, true, hist.cancelData, hist.ms || '00000');
-        }, 100);
+        updateTimeData(printMonday);
+        updateDOMForPrint(hist.asciiCode, hist.ms || '00000', true);
+        
+        setTimeout(() => window.print(), 300);
     }
 
-    // Cập nhật tham số nhận thêm 'ms'
-    function doPrint(tuNgayObj, asciiCode, printTime, printDate, pVer, isReprint = false, cancelData = null, ms = '00000') {
-        const printArea = document.getElementById('print-area');
+    async function startApp() { 
+        const currentMonday = getMonday(getGMT7Date());
+        let maxMonday = new Date(currentMonday);
+        maxMonday.setDate(currentMonday.getDate() + 7);
+        let maxDateStr = formatToInputDate(maxMonday);
+
+        document.getElementById('input-tu-ngay').setAttribute('max', maxDateStr);
         
-        let denNgayObj = new Date(tuNgayObj);
-        denNgayObj.setDate(tuNgayObj.getDate() + 6);
+        await loadFromFirebase(); 
+
+        let targetMonday = new Date(currentMonday);
+        targetMonday.setDate(currentMonday.getDate() + 7);
+        document.getElementById('input-tu-ngay').value = formatToInputDate(targetMonday);
         
-        let tuNgayStr = formatDisplayDate(tuNgayObj);
-        let denNgayStr = formatDisplayDate(denNgayObj);
-        
-        let outDateObj = new Date(denNgayObj);
-        outDateObj.setDate(denNgayObj.getDate() + 1);
-        let outDateStr = formatDisplayDate(outDateObj);
-
-        let approvalDateObj = new Date(tuNgayObj);
-        approvalDateObj.setDate(tuNgayObj.getDate() - 1);
-        let ngayDuyetStr = formatDisplayDate(approvalDateObj);
-
-        let tuan = getISOWeekNumber(tuNgayObj);
-        
-        const mMon = tuNgayObj.getMonth() + 1, yMon = tuNgayObj.getFullYear(), mSun = denNgayObj.getMonth() + 1, ySun = denNgayObj.getFullYear();
-        let thangNam = (yMon === ySun) ? ((mMon === mSun) ? `Tháng ${mMon} / Năm ${yMon}` : `Tháng ${mMon} | ${mSun} / Năm ${yMon}`) : `Tháng ${mMon}/${yMon} - Tháng ${mSun}/${ySun}`;
-
-        let tienMat = parseFloat(document.getElementById("input-tien-mat").value.replace(/,/g, '')) || 0;
-        let nganHang = parseFloat(document.getElementById("input-ngan-hang").value.replace(/,/g, '')) || 0;
-        let thuNhapTM = parseFloat(document.getElementById("input-thu-nhap-tm").value.replace(/,/g, '')) || 0;
-        let thuNhapNH = parseFloat(document.getElementById("input-thu-nhap-nh").value.replace(/,/g, '')) || 0;
-        
-        let tongSoDu = formatVND(tienMat + nganHang);
-        let tongThuNhap = formatVND(thuNhapTM + thuNhapNH);
-        let tongQuy = formatVND(tienMat + nganHang + thuNhapTM + thuNhapNH);
-
-        let now = new Date();
-        let weekKey = getWeekKey(tuNgayObj);
-        let ns = (allWeeksData[weekKey] && allWeeksData[weekKey].notesState) ? allWeeksData[weekKey].notesState : {};
-
-        let daysHtml = '';
-        let tongChiTuan = 0;
-
-        daysArr.forEach((day, idx) => {
-            let dateObj = new Date(tuNgayObj);
-            dateObj.setDate(tuNgayObj.getDate() + idx);
-            let dateStr = formatDisplayDate(dateObj);
-
-            let dayTotal = 0;
-            let kehoachCells = '';
-            
-            catsArr.forEach(cat => {
-                let catTotal = expenseData[day][cat].reduce((s, i) => s + (Number(i.total) || 0), 0);
-                dayTotal += catTotal;
-                kehoachCells += `<td style="text-align:right;">${catTotal > 0 ? formatVND(catTotal) : '0 đ'}</td>`;
-            });
-            tongChiTuan += dayTotal;
-
-            // Always show every day
-            daysHtml += `
-            <div style="text-align: center; border-top: 1.5px dashed #000; margin: 20px 0;"></div>
-            <div style="text-align: center; margin-bottom: 10px; font-weight:bold; font-size:16px;">${daysName[idx]} - ${dateStr}</div>
-            <div style="font-weight:bold; margin-bottom:5px;">* Kế hoạch</div>
-            <table class="p-table-kehoach">
-                <thead>
-                    <tr><th>Ăn sáng</th><th>Ăn trưa</th><th>Ăn tối</th><th>Di chuyển</th><th>Tiết kiệm</th><th>Khác</th></tr>
-                </thead>
-                <tbody>
-                    <tr>${kehoachCells}</tr>
-                </tbody>
-            </table>
-            <div style="margin-top: 5px; font-weight: bold;">* Tổng chi dự kiến: ${formatVND(dayTotal).replace(/\s/g, '')}</div>
-            <div style="margin-bottom: 5px; font-weight:bold; margin-top: 10px;">* Diễn giải cụ thể</div>
-            <table class="p-table-diengiai">
-            `;
-
-            catsArr.forEach((cat, cIdx) => {
-                let catItems = expenseData[day][cat];
-                let catTotal = catItems.reduce((s, i) => s + (Number(i.total) || 0), 0);
-                
-                daysHtml += `<tr>
-                    <td colspan="4" style="text-align:left; font-weight:bold; padding-top: 6px; padding-bottom: 2px;">- ${catsName[cIdx]}: <span style="margin-left:20px;">${catTotal > 0 ? formatVND(catTotal) : '0 đ'}</span></td>
-                </tr>`;
-
-               catItems.forEach(item => {
-                    let cleanNd = item.nd ? item.nd.replace(/^Nộp quỹ:\s*/i, '') : '';
-                    let title = `${cleanNd}${item.dt ? ' | ' + item.dt : ''}`;
-                    daysHtml += `<tr>
-                        <td style="width: auto; max-width: 0; padding-left: 20px; vertical-align: bottom; text-align: left; white-space: nowrap; overflow: hidden;">
-                            <div class="auto-fit-text" style="display: inline-block; white-space: nowrap; font-size: 16px;">+ ${title}</div>
-                        </td>
-                        <td style="width: 1%; text-align:right; vertical-align: bottom; white-space: nowrap; padding-left: 15px; font-size: 16px;">${item.gia} đ</td>
-                        <td style="width: 1%; text-align:center; vertical-align: bottom; white-space: nowrap; padding-left: 15px; font-size: 16px;">${item.sl}</td>
-                        <td style="width: 1%; text-align:right; padding-right: 10px; vertical-align: bottom; white-space: nowrap; padding-left: 15px; font-size: 16px; font-weight: bold;">${formatVND(item.total)}</td>
-                    </tr>`;
-                });
-            });
-            daysHtml += `</table>`;
-        });
-
-        let funds = (allWeeksData[weekKey] && allWeeksData[weekKey].funds) ? allWeeksData[weekKey].funds : [];
-        let fundRows = '';
-        let totalFactor = 0;
-        let totalFundMoney = 0;
-
-        for (let i = 0; i < Math.max(funds.length, 4); i += 2) {
-            let f1 = funds[i];
-            let f2 = funds[i + 1];
-            let rowHtml = `<tr>`;
-            
-            // Left column
-            if (f1) {
-                let factor = parseFloat(f1.factor) || 0;
-                totalFactor += factor; 
-                totalFundMoney += factor * 100000;
-                rowHtml += `
-                    <td style="border: 1px solid #000; text-align: center;">${i + 1}</td>
-                    <td style="border: 1px solid #000; text-align: left;">${f1.name || ''}</td>
-                    <td style="border: 1px solid #000; text-align: center;">${f1.factor || '0'}</td>
-                `;
-            } else {
-                rowHtml += `<td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td>`;
-            }
-
-            // Space
-            rowHtml += `<td style="border: none; width: 2%;"></td>`;
-
-            // Right column
-            if (f2) {
-                let factor = parseFloat(f2.factor) || 0;
-                totalFactor += factor; 
-                totalFundMoney += factor * 100000;
-                rowHtml += `
-                    <td style="border: 1px solid #000; text-align: center;">${i + 2}</td>
-                    <td style="border: 1px solid #000; text-align: left;">${f2.name || ''}</td>
-                    <td style="border: 1px solid #000; text-align: center;">${f2.factor || '0'}</td>
-                `;
-            } else {
-                if (i < 4 || f1) {
-                    rowHtml += `<td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td>`;
-                }
-            }
-            
-            rowHtml += `</tr>`;
-            fundRows += rowHtml;
-        }
-        
-        let fundNameNote = ".........................";
-        if (ns.dest === 'quy') {
-            let qSelect = document.getElementById('note-quy-select');
-            Array.from(qSelect.options).forEach(opt => {
-                if(opt.value === ns.quyId) fundNameNote = opt.text;
-            });
-        }
-
-        let budapText = "* Nội các quyết định ☐ không ☐ cho phép sử dụng nguồn tiền dư từ tuần trước để bù đắp chi phí cho tuần này.";
-        if (ns.budap === 'không') {
-            budapText = "* Nội các quyết định không sử dụng nguồn tiền dư từ tuần trước để bù đắp chi phí cho tuần này.";
-        } else if (ns.budap === 'cho phép') {
-            budapText = "* Nội các quyết định cho phép sử dụng nguồn tiền dư từ tuần trước để bù đắp chi phí cho tuần này.";
-        }
-
-        let nopNoteText = "* Vui lòng cấu hình phần xử lý tiền dư.";
-        let amountVal = ns.amount === 'custom' ? (ns.customAmount ? ns.customAmount + 'đ' : '...') : (ns.amount || '...');
-        if (ns.submit === 'khong_nop') {
-            nopNoteText = "* Số tiền còn lại cuối mỗi tuần sẽ không nộp mà chuyển sang tuần sau.";
-        } else if (ns.submit === 'nop') {
-            let destText = "...";
-            if (ns.dest === 'stk') destText = "STK " + (ns.stk || "...");
-            else if (ns.dest === 'quy') destText = "Quỹ " + (fundNameNote !== "........................." ? fundNameNote : "...");
-            nopNoteText = `* Số tiền còn lại cuối mỗi tuần sẽ được tích lũy lại cho tới khi đạt đủ ${amountVal}, số tiền dư ra sẽ Nộp vào ${destText} vào thứ 2 tuần kế tiếp.`;
-        }
-
-        let tinhTrangHtml = '';
-        if (cancelData && cancelData.isCancelled) {
-            let cDateStr = formatDisplayDate(new Date(cancelData.date));
-            tinhTrangHtml = `
-                <div style="font-style: italic;">
-                    ☑ Đang sử dụng: từ ngày <span style="display:inline-block; width:80px; text-align:center;">${tuNgayStr}</span> đến ngày <span style="display:inline-block; width:80px; text-align:center; font-weight:bold;">${cDateStr}</span><br>
-                    ☐ Đã hết hạn sử dụng: từ ngày <span style="display:inline-block; width:80px; text-align:center;">${outDateStr}</span> trở đi<br>
-                    ☑ Hiện đang lưu trữ tại bìa hồ sơ: từ ngày <span style="display:inline-block; width:80px; text-align:center; font-weight:bold;">${cDateStr}</span> trở đi<br>
-                    ☑ Đã hủy: ngày hủy: <span style="font-weight:bold;">${cDateStr}</span>, lý do: <span style="font-weight:bold;">${cancelData.reason}</span>
-                </div>
-            `;
-        } else {
-             tinhTrangHtml = `
-                <div style="font-style: italic;">
-                    ☑ Đang sử dụng: từ ngày <span style="display:inline-block; width:80px; text-align:center;">${tuNgayStr}</span> đến ngày <span style="display:inline-block; width:80px; text-align:center;">${denNgayStr}</span><br>
-                    ☐ Đã hết hạn sử dụng: từ ngày <span style="display:inline-block; width:80px; text-align:center;">${outDateStr}</span> trở đi<br>
-                    ☐ Hiện đang lưu trữ tại bìa hồ sơ: từ ngày <span style="display:inline-block; width:80px; text-align:center;">${outDateStr}</span> trở đi<br>
-                    ☐ Đã hủy: ngày hủy: ....../ ....../ 20......., lý do: ....................................................
-                </div>
-            `;
-        }
-
-        let printContent = `
-        <div class="print-container">
-            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 10px;">
-                <div>Mẫu số: D01/TTQLDT-VPKHCT</div>
-                <div>Cập nhật ngày: 15/03/2026</div>
-            </div>
-
-            <div style="border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <div style="font-size: 18px; font-weight:bold;">MSLT: ${tuan}-${pVer}/D01/TTQLDT-VPKHCT <span style="margin-left: 20px; color: #d32f2f;">MS: ${ms}</span></div>
-                        <div style="margin-top: 5px;">Thời gian in: <span style="margin-left: 20px;">${printTime} | ${printDate}</span></div>
-                    </div>
-                </div>
-
-                <div style="display: flex; align-items: flex-start; margin-top: 15px; font-style: italic;">
-                    <div style="flex: 1; line-height: 1.6;">
-                        ${tinhTrangHtml}
-                    </div>
-                </div>
-            </div>
-
-            <h2 style="text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px; font-size: 24px; margin-bottom: 25px;">KẾ HOẠCH CHI TIÊU</h2>
-
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px;">
-                <div style="flex: 1;">
-                    <span style="font-weight:bold;">Bàn giao tuần trước:</span><br>
-                        + Số dư: <span style="display:inline-block; width:100px; text-align:right; font-weight:bold;">${tongSoDu}</span><br>
-                        + Thu nhập dự kiến: <span style="display:inline-block; width:100px; text-align:right; font-weight:bold;">${tongThuNhap}</span><br>
-                        + Tổng quỹ: <span style="display:inline-block; width:100px; text-align:right; font-weight:bold; color:#d32f2f;">${tongQuy}</span>
-                </div>
-                <div style="flex: 1; text-align: right; line-height: 1.5;">
-                    <span style="font-weight:bold;">Tuần: ${tuan}</span><br>
-                    Tháng: ${thangNam.replace('Tháng ', '').replace(' / Năm 2026', '').split(' |')[0]}/2026<br>
-                    Từ ngày: ${tuNgayStr} đến ngày ${denNgayStr}<br>
-                    <div style="display: flex; justify-content: flex-end; margin-top:5px;">
-                        <span style="margin-right: 10px; font-weight:bold;">Tổng chi tuần dự kiến:</span>
-                        <span style="display:inline-block; width:100px; text-align:right; font-weight:bold; font-size:16px;">${formatVND(tongChiTuan)}</span>
-                    </div>
-                </div>
-            </div>
-
-            ${daysHtml}
-
-            <div style="line-height: 1.8; text-align: justify; font-size: 14px; margin-top:25px; border-top: 1.5px solid #000; padding-top: 15px;">
-                <p style="margin-bottom: 10px;">* Kế hoạch chi tiêu tuần <strong>${tuan}</strong> được thiết kế và xây dựng bởi bộ phận Kế hoạch và Tài chánh trực thuộc TTQLDT.<br>
-                <i style="font-weight:bold;">Đã trình lên Giám đốc TTQLDT kiểm tra và phê duyệt vào ngày ${ngayDuyetStr}</i>.<br>
-                Mọi vấn đề cần được giải đáp liên hệ trực tiếp tại văn phòng Kế hoạch và Tài chánh.</p>
-                
-                <p style="margin-bottom: 10px;">* Trên đây là bản kế hoạch chi tiêu cho tuần <strong>${tuan}</strong>, có hiệu lực từ 00h00 ngày <strong>${tuNgayStr}</strong>, hạn sử dụng tới 23h59 ngày <strong>${denNgayStr}</strong> sẽ hết hiệu lực và được thay bằng bản kế hoạch cho tuần tiếp theo.<br>
-                Khuyến khích chấp hành chi theo đúng bản kế hoạch này.</p>
-
-                <p style="margin-bottom: 10px;">${budapText}</p>
-
-                <p style="margin-bottom: 10px;">* Cuối mỗi ngày phải tổng kết lại số tiền đã sử dụng vào phần mềm MISA Sổ Thu Chi để đối chiếu với kế hoạch chi tiêu và cuối mỗi tuần phải nhập tiền tồn vào Phần mềm kiểm toán và xuất ra Phiếu kiểm toán và Phiếu yêu cầu cấp chi phí cho tuần tiếp theo.</p>
-
-                <p style="margin-bottom: 10px;">${nopNoteText}</p>
-
-                <p style="margin-bottom: 10px;">* Một số khuyến nghị cho tuần <strong>${tuan}</strong>:<br>
-                    + Phần trăm được phép chi có thể lấy đến 2 chữ số thập phân sau dấu phẩy.<br>
-                    + Phần trăm được phép chi: <strong>${ns.pctMin || 85} đến ${ns.pctMax || 100}</strong></p>
-            </div>
-
-            <div style="margin-top: 15px;">
-                <div style="text-align: center; font-weight:bold; margin-bottom: 5px;">BẢNG HỆ SỐ NỘP QUỸ TUẦN ${tuan}</div>
-                <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
-                    <tr>
-                        <th style="border: 1px solid #000; width: 5%; padding: 6px; text-align: center;">STT</th>
-                        <th style="border: 1px solid #000; width: 34%; padding: 6px; text-align: center;">Tên Quỹ</th>
-                        <th style="border: 1px solid #000; width: 10%; padding: 6px; text-align: center;">Hệ số nộp</th>
-                        <th style="border: none; width: 2%;"></th>
-                        <th style="border: 1px solid #000; width: 5%; padding: 6px; text-align: center;">STT</th>
-                        <th style="border: 1px solid #000; width: 34%; padding: 6px; text-align: center;">Tên Quỹ</th>
-                        <th style="border: 1px solid #000; width: 10%; padding: 6px; text-align: center;">Hệ số nộp</th>
-                    </tr>
-                    ${fundRows.length > 0 ? fundRows : '<tr><td colspan="7" style="border: 1px solid #000; padding: 6px; font-style:italic; color:#666; text-align: center;">Chưa có dữ liệu quỹ nộp trong tuần này.</td></tr>'}
-                </table>
-                <div style="text-align: right; font-weight: bold; margin-top: 5px;">
-                    Tổng hệ số: ${parseFloat(totalFactor.toFixed(2))}<br>
-                    Số tiền phải nộp: ${formatVND(totalFundMoney).replace(/\s/g, '')}
-                </div>
-            </div>
-
-            <table style="width: 100%; border:none; margin-top: 30px;">
-                <tr>
-                    <td style="border:none; text-align:left; width: 50%; vertical-align:top;">
-                        <span style="font-weight:bold;">- Nơi lưu:</span><br>
-                            + Phòng hồ sơ<br>
-                            + VT
-                    </td>
-                    <td style="border:none; text-align:center; width: 50%; vertical-align:top;">
-                        Saigon, ngày ${now.getDate()} tháng ${now.getMonth()+1} năm ${now.getFullYear()}<br>
-                        <span style="font-weight:bold;">Giám đốc</span><br><br><br><br>
-                    </td>
-                </tr>
-            </table>
-
-            <div style="text-align: center; margin-top: 30px;">
-                Mã đối soát: <span style="margin-left: 20px; font-family: monospace; letter-spacing: 2px;">${asciiCode}</span>
-            </div>
-           ${isReprint ? `<div style="text-align: center; font-weight: bold; font-size: 16px; margin-top: 5px;">BẢN SAO</div><div style="text-align:center; font-size:11px; margin-top:3px;">Thời gian in lại: ${new Date().toLocaleString('vi-VN')}</div>` : ''}
-            <h3 style="text-align: center; text-transform: uppercase; font-size: 14px; margin-top: 10px;">Phiếu kiểm toán bắt buộc phải được lưu trữ không hủy bỏ dưới mọi hình thức</h3>
-            
-            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #000; text-align: center; -webkit-print-color-adjust: exact;">
-                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <img src="https://lh3.googleusercontent.com/d/17dh-SYcmGxXsFiFOvZihF8PgsM3vHEEV" alt="[LOGO]" style="height: 60px; display: inline-block;"> 
-                    <span style="font-size: 14px; font-weight: bold; color: #000;">Copyright © 2026 Thiên Trường Software. All rights reserved.</span>
-                </div>
-                <div style="margin-top: 8px; font-size: 11px; color: #000;">
-                    Established March 22, 2026 | Saigon, Vietnam | https://lehonganthien61633-lgtm.github.io/kiemtoan/<br>
-                    <span style="font-style: italic;">Bản quyền thuộc về Thiên Trường Software</span>
-                </div>
-            </div>
-            </div>
-        `;
-
-        printArea.innerHTML = printContent;
-
-        // Auto-fit Font size
-        printArea.style.display = 'block';
-        printArea.style.position = 'absolute';
-        printArea.style.left = '-9999px';
-        printArea.style.width = '297mm'; // Chỉnh lại theo khung A4 landscape để tính width
-
-       const autoFitElements = printArea.querySelectorAll('.auto-fit-text');
-        autoFitElements.forEach(el => {
-            let fontSize = 16; 
-            el.style.fontSize = fontSize + 'px';
-            while (el.scrollWidth > el.parentElement.clientWidth && fontSize > 4) {
-                fontSize -= 0.5;
-                el.style.fontSize = fontSize + 'px';
-            }
-        });
-
-        printArea.style.display = '';
-        printArea.style.position = '';
-        printArea.style.left = '';
-        printArea.style.width = '';
-
-        setTimeout(() => window.print(), 200);
+        updateTimeData(targetMonday);
     }
-    // [KẾT THÚC SỬA] //
+    // [KẾT THÚC SỬA]
+</script>
 </script>
 </body>
 </html>
