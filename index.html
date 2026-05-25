@@ -3,408 +3,1236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phiếu Thông Tin Túi Đựng</title>
+    <title>Phiếu Thông Tin Túi Đựng - Hệ Thống Kế Hoạch</title>
     <style>
-        /* CSS Reset & Cơ bản */
-        * {
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&display=swap');
+
+        /* === CSS HỆ THỐNG AUTH (LUXURY MODERN THEME) === */
         body {
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 20px;
-        }
-
-        /* Khu vực điều khiển (Sẽ ẩn khi in) */
-        .controls {
-            background: #fff;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-        .controls input, .controls button {
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .controls button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .controls button:hover {
-            background-color: #0056b3;
-        }
-
-        /* Vùng in - Giao diện giấy A4 */
-        .print-area {
-            background: #fff;
-            width: 210mm;
-            min-height: 297mm;
-            margin: 0 auto;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-
-        /* Khung bảng cấu trúc Phiếu */
-        table.phieu-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 40px; /* Khoảng cách giữa 2 phiếu */
-        }
-        table.phieu-table td {
-            border: 1px solid #000;
-            padding: 10px;
-            vertical-align: top;
-        }
-
-        /* Tiêu đề & Liên */
-        .header-cell {
-            text-align: center;
-            position: relative;
-            padding-top: 20px !important;
-            padding-bottom: 20px !important;
-        }
-        .title {
-            font-weight: bold;
+            font-family: "Times New Roman", Times, serif;
             font-size: 16px;
-            text-transform: uppercase;
+            margin: 0;
+            background-color: #f0f0f0;
+            color: #000;
         }
-        .lien-badge {
-            position: absolute;
-            right: 10px;
-            top: 20px;
-            border: 1px solid #000;
-            padding: 2px 5px;
-            font-weight: bold;
-            font-size: 12px;
+        
+        .auth-wrapper {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: url('https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=2000&auto=format&fit=crop') center/cover;
+            display: flex; justify-content: center; align-items: center; z-index: 100000;
+            font-family: 'Roboto', sans-serif;
+        }
+        .auth-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: linear-gradient(135deg, rgba(20, 30, 48, 0.9) 0%, rgba(36, 59, 85, 0.8) 100%); 
+            backdrop-filter: blur(10px);
+        }
+        .auth-box {
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(25px);
+            padding: 50px 40px; 
+            border-radius: 20px; 
+            width: 90%; max-width: 400px; 
+            position: relative; z-index: 2; 
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            animation: authSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes authSlideUp { 
+            from { opacity: 0; transform: translateY(40px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        .auth-logo { text-align: center; margin-bottom: 10px; }
+        .auth-logo img { width: 70px; height: 70px; border-radius: 50%; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .auth-title { 
+            text-align: center; font-size: 28px; font-weight: 900; margin-bottom: 5px; 
+            letter-spacing: -0.5px; color: #1e293b;
+        }
+        .auth-subtitle { text-align: center; font-size: 13px; color: #64748b; font-weight: 400; margin-bottom: 35px; }
+        .auth-box .form-group { 
+            margin-bottom: 20px; 
+            position: relative; 
+            display: block !important; 
+            max-width: 100% !important; 
+        }
+        .auth-box .form-group label { 
+            font-size: 12px; color: #475569; font-weight: 700; letter-spacing: 0.5px; 
+            display: block; margin-bottom: 8px; text-transform: uppercase; 
+            text-align: left !important;
+        }
+        .auth-box input {
+            border: 2px solid #e2e8f0; padding: 15px 18px; border-radius: 12px; background: #f8fafc; 
+            transition: all 0.3s ease; width: 100% !important; box-sizing: border-box; 
+            font-size: 15px; color: #1e293b; font-weight: 500; 
+            text-align: left !important;
+        }
+        .auth-box input:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); outline: none; }
+        .auth-box .btn-main {
+            background: linear-gradient(to right, #2563eb, #1d4ed8); color: #ffffff;
+            border: none; border-radius: 12px; padding: 16px; font-size: 16px; font-weight: 700; letter-spacing: 0.5px;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3); transition: all 0.3s ease; width: 100%; cursor: pointer; margin-top: 10px;
+        }
+        .auth-box .btn-main:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(37, 99, 235, 0.4); filter: brightness(1.1); }
+        .auth-switch { text-align: center; margin-top: 25px; font-size: 14px; cursor: pointer; color: #64748b; transition: color 0.3s ease; font-weight: 500;}
+        .auth-switch:hover { color: #2563eb; }
+
+        /* === GIAO DIỆN NAVBAR & MENU === */
+        .navbar {
+            background-color: #2c3e50; color: white; padding: 12px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 15;
+        }
+        .menu-btn {
+            font-size: 26px; cursor: pointer; background: none; border: none;
+            color: white; margin-right: 20px; font-family: inherit;
+        }
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content {
+            display: none; position: absolute; background-color: #fff;
+            min-width: 220px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 10; top: 45px; left: 0; border: 1px solid #333;
+        }
+        .dropdown-content a {
+            color: black; padding: 12px 16px; text-decoration: none;
+            display: block; cursor: pointer; border-bottom: 1px dashed #ccc; font-size: 16px;
+        }
+        .dropdown-content a:hover { background-color: #e9e9e9; }
+        .show { display: block; }
+
+        /* === MODULES & CONTROLS === */
+        .container {
+            max-width: 900px; margin: 30px auto; background: #fff;
+            padding: 30px; border: 1px solid #aaa; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            min-height: 450px;
+        }
+        .module { display: none; }
+        .module.active { display: block; }
+        h2.module-title {
+            text-align: center; text-transform: uppercase; font-weight: bold;
+            border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 25px; font-size: 20px;
+        }
+        .form-group {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 18px; max-width: 480px; margin-left: auto; margin-right: auto;
+        }
+        .form-group label { font-weight: bold; flex: 1; }
+        .form-group input {
+            padding: 8px 10px; width: 200px; border: 1px solid #777;
+            font-family: inherit; font-size: 16px; box-sizing: border-box; text-align: center;
+        }
+        .form-group input[readonly] { background-color: #f5f5f5; cursor: not-allowed; border-style: dashed; }
+        
+        .date-wrapper { position: relative; width: 200px; display: inline-block; background: #fff; border: 1px solid #777; box-sizing: border-box; }
+        .date-wrapper input[type="date"] {
+            width: 100%; height: 35px; padding: 8px 10px; border: none; background: transparent;
+            color: transparent; cursor: pointer; position: relative; z-index: 2; outline: none;
+        }
+        .date-wrapper input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 1; background-color: transparent; }
+        .date-display {
+            position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+            z-index: 1; font-size: 16px; color: #000; pointer-events: none; 
         }
 
-        /* Cấu trúc cột nội dung */
-        .col-info { width: 30%; line-height: 1.6; }
-        .col-docs { width: 35%; }
-        .col-extra { width: 35%; }
-
-        .col-title {
-            margin-top: 0;
-            margin-bottom: 5px;
+        /* === BẢNG LỊCH SỬ IN === */
+        .modal-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .modal-table th, .modal-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        .modal-table th { background-color: #f2f2f2; font-weight: bold; }
+        .btn-save {
+            width: 100%; padding: 12px; background-color: #2c3e50; color: white;
+            border: none; cursor: pointer; font-size: 16px; border-radius: 4px; margin-top: 20px;
+            font-family: inherit; font-weight: bold; text-transform: uppercase;
         }
-
-        /* Tạo dòng chấm chấm (Dotted lines) */
-        .dotted-line {
-            border-bottom: 2px dotted #555;
-            height: 22px;
-            width: 100%;
-            margin-bottom: 2px;
+        .btn-save:hover { background-color: #1a252f; filter: brightness(1.1); }
+        .btn-sample {
+            background-color: #3498db; color: white; border: none; padding: 8px 15px;
+            cursor: pointer; border-radius: 4px; font-family: inherit; font-weight: bold;
         }
+        .btn-sample:hover { background-color: #2980b9; }
+        .readonly-input { background-color: #e9ecef !important; cursor: not-allowed; color: #555; border: 1px dashed #ccc !important; }
 
-        /* Ẩn các ID dư thừa sinh ra từ JS gốc để không làm rối UI nếu không dùng đến */
-        .hidden-inputs { display: none; }
+        /* === MODALS === */
+        .modal {
+            display: none; position: fixed; z-index: 20; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow: auto;
+        }
+        .modal-content {
+            background-color: #fff; margin: 5% auto; padding: 25px;
+            border: 1px solid #888; width: 850px; max-width: 95%;
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover, .close:focus { color: black; text-decoration: none; }
 
-        /* Chế độ In Ấn */
+        /* === CSS PHIẾU THÔNG TIN TÚI ĐỰNG === */
+        table.phieu-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; font-family: Arial, sans-serif; }
+        table.phieu-table td { border: 1px solid #000; padding: 10px; vertical-align: top; }
+        .header-cell { text-align: center; position: relative; padding-top: 20px !important; padding-bottom: 20px !important; }
+        .phieu-title { font-weight: bold; font-size: 16px; text-transform: uppercase; font-family: Arial, sans-serif; }
+        .lien-badge { position: absolute; right: 10px; top: 20px; border: 1px solid #000; padding: 2px 5px; font-weight: bold; font-size: 12px; }
+        .col-info { width: 30%; line-height: 1.6; font-family: Arial, sans-serif; }
+        .col-docs { width: 35%; font-family: Arial, sans-serif; }
+        .col-extra { width: 35%; font-family: Arial, sans-serif; }
+        .col-title { margin-top: 0; margin-bottom: 5px; font-weight: bold; font-family: Arial, sans-serif; }
+        .dotted-line { border-bottom: 2px dotted #555; height: 22px; width: 100%; margin-bottom: 2px; }
+
+        /* === KHU VỰC IN ẤN === */
+        #print-area { display: none; }
         @media print {
-            body {
-                background: none;
-                padding: 0;
+            body * { visibility: hidden; }
+            .navbar, .container, .modal, .auth-wrapper { display: none !important; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { 
+                display: block; position: absolute; left: 0; top: 0; width: 100%; 
+                background: #fff; padding: 15px; box-sizing: border-box;
             }
-            .controls, .hidden-inputs {
-                display: none !important;
-            }
-            .print-area {
-                width: 100%;
-                margin: 0;
-                padding: 0;
-                box-shadow: none;
-            }
+            @page { size: A4; margin: 15mm; }
         }
     </style>
-
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
-    <div class="controls no-print">
-        <label><b>Chọn Ngày Bất Kỳ Trong Tuần:</b></label>
-        <input type="date" id="input-tu-ngay">
-        <label>Tuần ISO:</label>
-        <input type="text" id="input-tuan" readonly style="width: 50px; background: #eee;">
+<div id="auth-screen" class="auth-wrapper">
+    <div class="auth-overlay"></div>
+    
+    <div class="auth-box" id="login-box">
+        <div class="auth-logo" style="margin-bottom: 15px;">
+            <div style="font-size: 32px; font-weight: 900; background: linear-gradient(45deg, #2c3e50, #3498db); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 1px;">THIÊN TRƯỜNG</div>
+            <div style="font-size: 16px; font-weight: 700; color: #b8860b; letter-spacing: 4px; margin-top: -5px;">SOFTWARE</div>
+        </div>
+        <div class="auth-subtitle" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">HỆ THỐNG QUẢN LÝ PHIẾU TÚI ĐỰNG</div>
         
-        <button onclick="window.print()">🖨️ In Phiếu (Ctrl + P)</button>
-        <button onclick="saveToFirebase()" style="background-color: #28a745;">💾 Lưu Firebase</button>
-        <span id="save-status" style="color: green; font-weight: bold; margin-left: 10px;"></span>
+        <div class="form-group">
+            <label>SỐ ĐIỆN THOẠI</label>
+            <input type="tel" id="login-phone" placeholder="Nhập số điện thoại...">
+        </div>
+        <div class="form-group">
+            <label>MẬT KHẨU</label>
+            <input type="password" id="login-pass" placeholder="Nhập mật khẩu..." onkeydown="if(event.key === 'Enter') handleLogin()">
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+            <label>MÃ XÁC NHẬN (CAPTCHA)</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="text" id="login-captcha" placeholder="Nhập mã bên cạnh..." style="flex:1;" onkeydown="if(event.key === 'Enter') handleLogin()">
+                <canvas id="captchaCanvas" width="120" height="45" onclick="generateCaptcha()" style="background:#fff; border-radius:8px; border:2px solid #e2e8f0; cursor:pointer;"></canvas>
+            </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:-5px; margin-bottom:25px;">
+            <span style="color:#64748b; font-size:13px; font-weight:600; cursor:pointer; transition:0.3s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'" onclick="switchAuth('forgot')">Quên mật khẩu?</span>
+        </div>
+        <button class="btn-main" onclick="handleLogin()">ĐĂNG NHẬP NGAY</button>
+        <div class="auth-switch" onclick="switchAuth('register')">Chưa có tài khoản? Tạo mới ngay</div>
     </div>
 
-    <div class="hidden-inputs">
-        <span id="display-tu-ngay"></span>
-        <input type="text" id="input-den-ngay">
-        <input type="text" id="input-thang-nam">
-        <span id="note-tuan-3"></span>
-        <span id="note-ngay-duyet"></span>
-        <input type="text" id="input-tien-mat">
-        <input type="text" id="input-ngan-hang">
-        <input type="text" id="input-thu-nhap-tm">
-        <input type="text" id="input-thu-nhap-nh">
-        <input type="text" id="note-custom-amount">
-        <input type="text" id="note-stk-input">
-        <input type="text" id="note-pct-min" value="85">
-        <input type="text" id="note-pct-max" value="100">
-        <select id="note-quy-select"><option value=""></option></select>
-        <tbody id="fund-table-body"></tbody>
-        <tbody id="tbody-thu-nhap-tm"></tbody>
-        <tbody id="tbody-thu-nhap-nh"></tbody>
+    <div class="auth-box" id="register-box" style="display:none;">
+        <div class="auth-title">ĐĂNG KÝ</div>
+        <div class="auth-subtitle">TRỞ THÀNH THÀNH VIÊN HỆ THỐNG</div>
+        <div class="form-group">
+            <label>HỌ VÀ TÊN</label>
+            <input type="text" id="reg-name" placeholder="VD: NGUYEN VAN A" oninput="this.value = this.value.toUpperCase()">
+        </div>
+        <div class="form-group">
+            <label>SỐ ĐIỆN THOẠI</label>
+            <input type="tel" id="reg-phone" placeholder="Sẽ dùng để đăng nhập...">
+        </div>
+        <div class="form-group">
+            <label>SỐ CCCD / MÃ ĐỊNH DANH</label>
+            <input type="text" id="reg-cccd" placeholder="Nhập đủ 12 số (Dùng khi quên mật khẩu)" maxlength="12" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        </div>
+        <div class="form-group">
+            <label>MẬT KHẨU</label>
+            <input type="password" id="reg-pass" placeholder="Tạo mật khẩu an toàn...">
+        </div>
+        <button class="btn-main" style="background: linear-gradient(to right, #0ea5e9, #0284c7);" onclick="handleRegister()">TẠO TÀI KHOẢN MỚI</button>
+        <div class="auth-switch" onclick="switchAuth('login')">← Đã có tài khoản? Đăng nhập</div>
     </div>
 
-    <div class="print-area">
+    <div class="auth-box" id="forgot-box" style="display:none;">
+        <div class="auth-title">KHÔI PHỤC</div>
+        <div class="auth-subtitle">CẤP LẠI MẬT KHẨU TỰ ĐỘNG</div>
+        <p style="font-size:13px; text-align:center; margin-bottom:20px; color:#475569; line-height: 1.6;">Hệ thống sẽ đối chiếu CCCD và tự động cấp mật khẩu mới ngay lập tức.</p>
+        <div class="form-group">
+            <label>SỐ ĐIỆN THOẠI</label>
+            <input type="tel" id="forgot-phone" placeholder="Nhập số điện thoại...">
+        </div>
+        <div class="form-group">
+            <label>SỐ CCCD ĐÃ ĐĂNG KÝ</label>
+            <input type="text" id="forgot-cccd" placeholder="Nhập 12 số CCCD..." maxlength="12">
+        </div>
+        <button class="btn-main" style="background: linear-gradient(to right, #f43f5e, #e11d48);" onclick="handleForgotPassword()">XÁC MINH & CẤP MẬT KHẨU MỚI</button>
+        <div class="auth-switch" onclick="switchAuth('login')">← Hủy và quay lại</div>
+    </div>
+</div>
+
+<div id="main-app" style="display: none; width: 100%;">
+    <div class="navbar">
+        <div style="display: flex; align-items: center;">
+            <div class="dropdown">
+                <button class="menu-btn" onclick="toggleMenu()">☰</button>
+                <div id="myDropdown" class="dropdown-content">
+                    <a onclick="switchModule('module-phieu')">🖨️ Quản Lý Phiếu Túi Đựng</a>
+                    <a onclick="switchModule('module-account'); loadAccountInfo();" style="color:#27ae60; font-weight: bold;">👤 Thông Tin Tài Khoản</a>
+                    <a id="nav-admin" onclick="switchModule('module-admin'); renderAdminPanel();" style="display:none; color:#e74c3c; border-top: 1px solid #ccc; font-weight: bold;">🛡️ Quản Trị Hệ Thống</a>
+                    <a onclick="openChangePassModal()" style="color:#0056b3; border-top: 1px dashed #ccc; font-weight: bold;">🔑 Đổi Mật Khẩu</a>
+                    <a onclick="handleLogout()" style="color:#e74c3c; border-top: 1px solid #ccc; font-weight: bold;">🚪 Đăng Xuất</a>
+                </div>
+            </div>
+            <h3 style="margin: 0; font-weight: bold; letter-spacing: 1px;">QUẢN LÝ PHIẾU <span id="save-status" style="font-size: 14px; margin-left: 15px;"></span></h3>
+        </div>
+        <div id="user-display-name" style="font-weight: bold; font-size: 14px; text-transform: uppercase;"></div>
+    </div>
+
+    <div class="container module active" id="module-phieu">
+        <h2 class="module-title">In Phiếu Thông Tin Túi Đựng & Lịch Sử</h2>
         
-        <table class="phieu-table">
-            <tr>
-                <td colspan="3" class="header-cell">
-                    <div class="title">PHIẾU THÔNG TIN TÚI ĐỰNG</div>
-                    <div class="lien-badge">LIÊN 1: DÁN BÌA</div>
-                </td>
-            </tr>
-            <tr>
-                <td class="col-info">
-                    <p class="col-title">Tuần: <span id="note-tuan">...</span>/ <span class="nam-hien-tai">2026</span> | MS: 28597</p>
-                    <p class="col-title">Từ ngày: <span id="note-tu-ngay">...</span></p>
-                    <p class="col-title">Đến ngày: <span id="note-den-ngay">...</span></p>
-                    <p class="col-title">Ngày in: <span class="ngay-in-hien-tai">...</span></p>
-                    <p class="col-title" style="margin-top: 15px;">Ký tên xác nhận:</p>
-                </td>
-                <td class="col-docs">
-                    <p class="col-title">Danh sách tài liệu lưu trữ:</p>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                </td>
-                <td class="col-extra">
-                    <p class="col-title">Thông tin thêm:</p>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                </td>
-            </tr>
+        <div class="form-group">
+            <label>Chọn Ngày Bất Kỳ Trong Tuần:</label>
+            <div class="date-wrapper">
+                <span class="date-display" id="display-tu-ngay"></span>
+                <input type="date" id="input-tu-ngay">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Tuần ISO:</label>
+            <input type="text" id="input-tuan" readonly class="readonly-input">
+        </div>
+        
+        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+            <button class="btn-save" style="background-color: #3498db; width: auto; padding: 12px 25px; margin: 0;" onclick="executePrint()">🖨️ TẠO BẢN IN PHIẾU (Ctrl+P)</button>
+        </div>
+
+        <h3 style="margin-top: 40px; font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Lịch Sử In Phiếu Túi Đựng</h3>
+        <table class="modal-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">STT</th>
+                    <th style="width: 25%;">Thời Gian In</th>
+                    <th style="width: 15%;">Tuần In</th>
+                    <th style="width: 25%;">Mã Đối Soát</th>
+                    <th style="width: 10%;">Hủy</th>
+                    <th style="width: 20%;">Hành Động</th>
+                </tr>
+            </thead>
+            <tbody id="print-history-tbody">
+            </tbody>
+        </table>
+    </div>
+
+    <div id="module-account" class="container module">
+        <h2 class="module-title" style="color: #27ae60; border-bottom-color: #27ae60;">Thông Tin Tài Khoản</h2>
+        <div style="max-width: 500px; margin: 0 auto; background: #f9f9f9; padding: 25px; border-radius: 8px; border: 1px solid #ddd;">
+            <div class="form-group" style="display: block;">
+                <label style="display: block; margin-bottom: 8px; color: #555; text-align: left;">ID TÀI KHOẢN</label>
+                <input type="text" id="acc-id" readonly class="readonly-input" style="width: 100%; text-align: left; color: #d32f2f; font-weight: bold;">
+            </div>
+            <div class="form-group" style="display: block;">
+                <label style="display: block; margin-bottom: 8px; color: #555; text-align: left;">SỐ ĐIỆN THOẠI (TÀI KHOẢN)</label>
+                <input type="text" id="acc-phone" readonly class="readonly-input" style="width: 100%; text-align: left;">
+            </div>
+            <div class="form-group" style="display: block;">
+                <label style="display: block; margin-bottom: 8px; color: #555; text-align: left;">HỌ VÀ TÊN</label>
+                <input type="text" id="acc-name" style="width: 100%; text-align: left;" oninput="this.value = this.value.toUpperCase()">
+            </div>
+            <div class="form-group" style="display: block;">
+                <label style="display: block; margin-bottom: 8px; color: #555; text-align: left;">SỐ CCCD / MÃ ĐỊNH DANH</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="acc-cccd" readonly class="readonly-input" style="width: 100%; text-align: left; flex: 2; font-weight: bold;">
+                    <button class="btn-sample" style="background:#2c3e50; color:white; margin:0; flex: 1;" onclick="openReqCccd()">YÊU CẦU ĐỔI</button>
+                </div>
+                <div style="font-size:12px; color:#888; margin-top:6px; font-style:italic;" id="acc-cccd-info">Số lần đổi: 0 | Lần cuối: --</div>
+            </div>
+            <button class="btn-save" style="background-color: #27ae60;" onclick="saveAccountInfo()">CẬP NHẬT THÔNG TIN</button>
+        </div>
+    </div>
+
+    <div id="module-admin" class="container module">
+        <h2 class="module-title" style="color: #e74c3c; border-bottom-color: #e74c3c;">Bảng Điều Khiển Quản Trị <span id="admin-bell" style="display:none;">🔔</span></h2>
+        
+        <h3 style="color:#0056b3; margin-top:20px; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 16px;">YÊU CẦU THAY ĐỔI CCCD (ẨN DANH)</h3>
+        <table class="modal-table" style="margin-top: 10px; margin-bottom: 30px;">
+            <thead>
+                <tr style="background-color: #e9ecef;">
+                    <th>Tài khoản yêu cầu (SĐT)</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="body-admin-cccd"></tbody>
         </table>
 
-        <table class="phieu-table">
-            <tr>
-                <td colspan="3" class="header-cell">
-                    <div class="title">PHIẾU THÔNG TIN TÚI ĐỰNG</div>
-                    <div class="lien-badge">LIÊN 2: LƯU TRỮ</div>
-                </td>
-            </tr>
-            <tr>
-                <td class="col-info">
-                    <p class="col-title">Tuần: <span id="note-tuan-2">...</span>/ <span class="nam-hien-tai">2026</span> | MS: 28597</p>
-                    <p class="col-title">Từ ngày: <span id="note-tu-ngay-2">...</span></p>
-                    <p class="col-title">Đến ngày: <span id="note-den-ngay-2">...</span></p>
-                    <p class="col-title">Ngày in: <span class="ngay-in-hien-tai">...</span></p>
-                    <p class="col-title" style="margin-top: 15px;">Ký tên xác nhận:</p>
-                </td>
-                <td class="col-docs">
-                    <p class="col-title">Danh sách tài liệu lưu trữ:</p>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                </td>
-                <td class="col-extra">
-                    <p class="col-title">Thông tin thêm:</p>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                    <div class="dotted-line"></div><div class="dotted-line"></div>
-                </td>
-            </tr>
+        <h3 style="color:#e74c3c; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 16px;">DANH SÁCH TÀI KHOẢN</h3>
+        <table class="modal-table" style="margin-top: 10px;">
+            <thead>
+                <tr style="background-color: #e9ecef;">
+                    <th style="width: 5%;">STT</th>
+                    <th style="width: 35%;">Thông Tin Tài Khoản</th>
+                    <th style="width: 25%;">Liên Hệ & Định Danh</th>
+                    <th style="width: 35%;">Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="admin-user-list">
+            </tbody>
         </table>
-
     </div>
 
-    <script>
-        // 1. CẤU HÌNH FIREBASE
-        const firebaseConfig = {
-            databaseURL: "https://phieuthongtin-5f964-default-rtdb.firebaseio.com"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+    <div id="modal-change-pass" class="modal" style="z-index: 99999;">
+        <div class="modal-content" style="max-width: 400px; border-radius: 12px; border: none; padding: 40px 30px;">
+            <span class="close" style="margin-top: -15px; margin-right: -5px;" onclick="document.getElementById('modal-change-pass').style.display='none'">×</span>
+            <h2 class="module-title" style="border-bottom:none; font-size:1.4em; color: #1e293b; margin-bottom: 10px;">ĐỔI MẬT KHẨU</h2>
+            <p style="text-align: center; color: #64748b; font-size: 13px; margin-bottom: 25px;">Bảo mật tài khoản của bạn</p>
+            <div class="form-group" style="display: block;">
+                <label style="display: block; margin-bottom: 8px; font-size: 12px; color: #475569;">MẬT KHẨU HIỆN TẠI</label>
+                <input type="password" id="cp-old" placeholder="Nhập mật khẩu cũ..." style="width:100%; border: 2px solid #e2e8f0; padding: 12px; border-radius: 8px; text-align: left; background: #f8fafc;">
+            </div>
+            <div class="form-group" style="display: block;">
+                <label style="display: block; margin-bottom: 8px; font-size: 12px; color: #475569;">MẬT KHẨU MỚI</label>
+                <input type="password" id="cp-new" placeholder="Nhập mật khẩu mới..." style="width:100%; border: 2px solid #e2e8f0; padding: 12px; border-radius: 8px; text-align: left; background: #f8fafc;">
+            </div>
+            <button class="btn-save" style="background: linear-gradient(to right, #0ea5e9, #0284c7); border-radius: 12px; padding: 15px;" onclick="confirmChangePass()">XÁC NHẬN ĐỔI</button>
+        </div>
+    </div>
 
-        // 2. BIẾN MÔI TRƯỜNG TOÀN CỤC (Khai báo để JS cũ không báo lỗi)
-        let allWeeksData = {};
-        let expenseData = {};
-        let currentWeekKey = '';
-        let daysArr = ['t2', 't3', 't4', 't5', 't6', 't7', 'cn'];
-        let catsArr = ['thu', 'chi'];
+    <div id="modal-req-cccd" class="modal" style="z-index: 99999;">
+        <div class="modal-content" style="max-width: 400px; padding: 30px;">
+            <span class="close" onclick="document.getElementById('modal-req-cccd').style.display='none'">×</span>
+            <h2 class="module-title">YÊU CẦU ĐỔI CCCD</h2>
+            <p style="font-size:13px; text-align:center; color:#e74c3c; font-style:italic;">Yêu cầu sẽ được gửi tới Admin. Quá trình xét duyệt diễn ra ẩn danh.</p>
+            <div class="form-group" style="display:block;">
+                <label style="display:block; margin-bottom:5px;">CCCD Cũ (Không thể sửa)</label>
+                <input type="text" id="req-cccd-old" readonly class="readonly-input" style="width:100%">
+            </div>
+            <div class="form-group" style="display:block;">
+                <label style="display:block; margin-bottom:5px;">CCCD Mới (12 số)</label>
+                <input type="text" id="req-cccd-new" maxlength="12" placeholder="Nhập số CCCD mới..." oninput="this.value = this.value.replace(/[^0-9]/g, '')" style="width:100%">
+            </div>
+            <button class="btn-save" style="background-color: #3498db;" onclick="submitReqCccd()">GỬI YÊU CẦU LÊN ADMIN</button>
+        </div>
+    </div>
 
-        // Hàm giả lập (Mock functions) để tránh báo lỗi do đoạn JS thiếu hàm UI liên quan
-        function ensureExpenseDataStructure() {
-            if(!expenseData) expenseData = {};
-            daysArr.forEach(d => {
-                if(!expenseData[d]) expenseData[d] = {};
-                catsArr.forEach(c => { if(!expenseData[d][c]) expenseData[d][c] = []; });
+    <div id="modal-cancel-print" class="modal" style="z-index: 60;">
+        <div class="modal-content" style="max-width:400px;">
+            <span class="close" onclick="document.getElementById('modal-cancel-print').style.display='none'">×</span>
+            <h2 class="module-title" style="border-bottom:none; margin-bottom:5px; font-size:1.5em;">Xác nhận hủy bản in</h2>
+            <div class="form-group" style="display:block;">
+                <label style="display:block; margin-bottom: 5px;">Ngày hủy:</label>
+                <input type="date" id="cancel-date" style="width:100%; height: 35px; box-sizing:border-box;">
+            </div>
+            <div class="form-group" style="display:block;">
+                <label style="display:block; margin-bottom: 5px;">Lý do hủy:</label>
+                <input type="text" id="cancel-reason" placeholder="Nhập lý do..." style="width:100%;">
+            </div>
+            <input type="hidden" id="cancel-hist-index">
+            <button type="button" class="btn-save" style="background-color:#e74c3c;" onclick="confirmCancelPrint()">Xác nhận hủy</button>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 10px; padding: 20px; color: #333; width: 100%;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <img src="https://lh3.googleusercontent.com/d/17dh-SYcmGxXsFiFOvZihF8PgsM3vHEEV" alt="[LOGO]" style="height: 80px; display: inline-block;"> 
+            <span style="font-size: 16px; font-weight: bold; color: #1a1a1a;">Copyright © 2026 Thiên Trường Software. All rights reserved.</span>
+        </div>
+        <div style="max-width: 650px; margin: 15px auto 0; border-top: 1px solid #ccc; padding-top: 10px; font-size: 13px; color: #444; line-height: 1.6;">
+            Established March 22, 2026 | Saigon, Vietnam | https://lehonganthien61633-lgtm.github.io/kiemtoan/<br>
+            <span style="font-style: italic;">Bản quyền thuộc về Thiên Trường Software</span>
+        </div>
+    </div>
+</div>
+
+<div id="print-area">
+    <table class="phieu-table">
+        <tr>
+            <td colspan="3" class="header-cell">
+                <div class="phieu-title">PHIẾU THÔNG TIN TÚI ĐỰNG</div>
+                <div class="lien-badge">LIÊN 1: DÁN BÌA</div>
+            </td>
+        </tr>
+        <tr>
+            <td class="col-info">
+                <p class="col-title">Tuần: <span id="note-tuan">...</span>/ <span class="nam-hien-tai">2026</span> | MS: 28597</p>
+                <p class="col-title">Từ ngày: <span id="note-tu-ngay">...</span></p>
+                <p class="col-title">Đến ngày: <span id="note-den-ngay">...</span></p>
+                <p class="col-title">Ngày in: <span class="ngay-in-hien-tai">...</span></p>
+                <p class="col-title" style="margin-top: 15px;">Ký tên xác nhận:</p>
+                <div class="ascii-display" style="font-family: monospace; font-size: 12px; margin-top: 30px; font-weight: bold;"></div>
+            </td>
+            <td class="col-docs">
+                <p class="col-title">Danh sách tài liệu lưu trữ:</p>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+            </td>
+            <td class="col-extra">
+                <p class="col-title">Thông tin thêm:</p>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="phieu-table">
+        <tr>
+            <td colspan="3" class="header-cell">
+                <div class="phieu-title">PHIẾU THÔNG TIN TÚI ĐỰNG</div>
+                <div class="lien-badge">LIÊN 2: LƯU TRỮ</div>
+            </td>
+        </tr>
+        <tr>
+            <td class="col-info">
+                <p class="col-title">Tuần: <span id="note-tuan-2">...</span>/ <span class="nam-hien-tai">2026</span> | MS: 28597</p>
+                <p class="col-title">Từ ngày: <span id="note-tu-ngay-2">...</span></p>
+                <p class="col-title">Đến ngày: <span id="note-den-ngay-2">...</span></p>
+                <p class="col-title">Ngày in: <span class="ngay-in-hien-tai">...</span></p>
+                <p class="col-title" style="margin-top: 15px;">Ký tên xác nhận:</p>
+                <div class="ascii-display" style="font-family: monospace; font-size: 12px; margin-top: 30px; font-weight: bold;"></div>
+            </td>
+            <td class="col-docs">
+                <p class="col-title">Danh sách tài liệu lưu trữ:</p>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+            </td>
+            <td class="col-extra">
+                <p class="col-title">Thông tin thêm:</p>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+                <div class="dotted-line"></div><div class="dotted-line"></div>
+            </td>
+        </tr>
+    </table>
+    <div class="reprint-watermark" style="text-align: center; font-weight: bold; font-size: 14px; margin-top: 15px;"></div>
+</div>
+
+<script>
+    // --- MODULE AUTH JAVASCRIPT ---
+    const AUTH_DB_URL = "https://kiemdem-b7042-default-rtdb.asia-southeast1.firebasedatabase.app/systemDB.json"; 
+    const MASTER_DB_BASE = "https://account-63e9a-default-rtdb.asia-southeast1.firebasedatabase.app/systemDB";
+    const BASE_DATA_URL = "https://phieuthongtin-5f964-default-rtdb.firebaseio.com/usersData/";
+
+    let systemUsers = {};
+    let activeUserPhone = null;
+    let currentCaptchaCode = "";
+    let knownPendingReqs = []; 
+    let knownForgotPass = [];
+    let printHistory = [];
+
+    async function syncToMasterDB(phone) {
+        if (!systemUsers[phone]) return;
+        try {
+            await fetch(MASTER_DB_BASE + "/users/" + phone + ".json", {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(systemUsers[phone])
             });
-        }
-        function renderFundTable() {}
-        function renderThuNhapTMModal() {}
-        function renderThuNhapNHModal() {}
-        function tinhTongBanGiao() {}
-        function updateNoteFundDropdown() {}
-        function renderNoteDisplay() {}
-        function renderMainCategory() {}
-        function updateDayTotals() {}
-        function updateWeeklySummary() {}
-        function scheduleSave() {}
+        } catch (error) { console.error(error); }
+    }
 
-        // --- BẮT ĐẦU ĐOẠN JS GỐC CỦA BẠN (CÓ CHỈNH SỬA NHẸ ĐỂ CẬP NHẬT GIAO DIỆN ĐÚNG) ---
-        const inputTuNgay = document.getElementById("input-tu-ngay");
-        const inputTuan = document.getElementById("input-tuan");
+    async function removeFromMasterDB(phone) {
+        try {
+            await fetch(MASTER_DB_BASE + "/users/" + phone + ".json", { method: 'DELETE' });
+        } catch (error) { console.error(error); }
+    }
 
-        function getGMT7Date() {
-            const d = new Date();
-            return new Date(d.getTime() + (d.getTimezoneOffset() * 60000) + (3600000 * 7));
+    setInterval(async () => {
+        let checkPhone = activeUserPhone;
+        if (!checkPhone) {
+            let forgotPhoneInput = document.getElementById('forgot-phone');
+            if (forgotPhoneInput) checkPhone = forgotPhoneInput.value.trim();
         }
-        function getMonday(d) {
-            let dateObj = new Date(d);
-            const day = dateObj.getDay();
-            const diff = dateObj.getDate() - day + (day === 0 ? -6 : 1);
-            return new Date(dateObj.setDate(diff));
-        }
-        function formatToInputDate(date) {
-            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        }
-        function formatDisplayDate(date) {
-            return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
-        }
+        if (!checkPhone) return;
 
-        function getISOWeekNumber(date) {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-            return Math.ceil((((d - new Date(Date.UTC(d.getUTCFullYear(), 0, 1))) / 86400000) + 1) / 7);
-        }
-        function getWeekKey(date) {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-            let year = d.getUTCFullYear();
-            let w = getISOWeekNumber(date);
-            return year + '-' + String(w).padStart(2, '0');
-        }
-
-        inputTuNgay.addEventListener('change', function() {
-            if (!this.value) return;
-            let parts = this.value.split('-');
-            let selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        try {
+            let res = await fetch(AUTH_DB_URL);
+            let data = await res.json();
             
-            let currentMonday = getMonday(getGMT7Date());
-            let maxMonday = new Date(currentMonday);
-            maxMonday.setDate(currentMonday.getDate() + 7);
-            let monday = getMonday(selectedDate);
-            
-            if (monday > maxMonday) {
-                alert("Bạn chỉ được phép lập kế hoạch tối đa đến tuần kế tiếp!");
-                monday = maxMonday;
-            }
+            let masterRes = await fetch(MASTER_DB_BASE + ".json");
+            let masterData = await masterRes.json();
+            let masterUsers = (masterData && masterData.users) ? masterData.users : {};
 
-            setTimeout(() => {
-                this.value = formatToInputDate(monday);
-                loadWeek(monday);
-            }, 10);
-        });
-
-        function updateTimeData(monday) {
-            document.getElementById("display-tu-ngay").textContent = formatDisplayDate(monday);
-            let sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
-            document.getElementById("input-den-ngay").value = formatDisplayDate(sunday);
-            
-            let isoWeek = getISOWeekNumber(monday);
-            inputTuan.value = isoWeek;
-            
-            let approvalDate = new Date(monday);
-            approvalDate.setDate(monday.getDate() - 1);
-
-            // Cập nhật cho Phiếu 1
-            if(document.getElementById('note-tuan')) document.getElementById('note-tuan').innerText = isoWeek;
-            if(document.getElementById('note-tu-ngay')) document.getElementById('note-tu-ngay').innerText = formatDisplayDate(monday);
-            if(document.getElementById('note-den-ngay')) document.getElementById('note-den-ngay').innerText = formatDisplayDate(sunday);
-            
-            // Cập nhật cho Phiếu 2 (Bổ sung thêm ID cho Liên 2)
-            if(document.getElementById('note-tuan-2')) document.getElementById('note-tuan-2').innerText = isoWeek;
-            if(document.getElementById('note-tu-ngay-2')) document.getElementById('note-tu-ngay-2').innerText = formatDisplayDate(monday);
-            if(document.getElementById('note-den-ngay-2')) document.getElementById('note-den-ngay-2').innerText = formatDisplayDate(sunday);
-            if(document.getElementById('note-tuan-3')) document.getElementById('note-tuan-3').innerText = isoWeek;
-            if(document.getElementById('note-ngay-duyet')) document.getElementById('note-ngay-duyet').innerText = formatDisplayDate(approvalDate);
-
-            // Cập nhật năm hiện tại
-            document.querySelectorAll('.nam-hien-tai').forEach(el => el.innerText = monday.getFullYear());
-        }
-
-        // ... [Các hàm getFundsFromPreviousWeek, getPrevWeekNHList, saveCurrentWeekLocally giữ nguyên logic, 
-        // ở dạng thu gọn vì form UI không render chúng ra mặt trực tiếp trong yêu cầu này] ...
-
-        function loadWeek(targetMonday) {
-            let newKey = getWeekKey(targetMonday);
-            let fallbackKey = targetMonday.getFullYear() + '-' + String(getISOWeekNumber(targetMonday)).padStart(2, '0');
-
-            currentWeekKey = newKey;
-            updateTimeData(targetMonday);
-            ensureExpenseDataStructure();
-
-            // Tích hợp Firebase Load Data tại đây
-            db.ref('weeks/' + currentWeekKey).once('value').then(snapshot => {
-                if(snapshot.exists()){
-                    allWeeksData[currentWeekKey] = snapshot.val();
-                    console.log("Đã tải dữ liệu từ Firebase cho tuần: ", currentWeekKey);
-                } else {
-                    console.log("Không có dữ liệu cũ trên Firebase cho tuần này.");
+            if (data && data.users) {
+                let needLocalUpdate = false;
+                for (let ph in data.users) {
+                    if (data.users[ph].syncedToMaster && !masterUsers[ph]) {
+                        delete data.users[ph];
+                        needLocalUpdate = true;
+                        if (activeUserPhone === ph) {
+                            alert("⚠️ TÀI KHOẢN CỦA BẠN ĐÃ BỊ XÓA TỪ HỆ THỐNG QUẢN TRỊ MASTER! Phiên sẽ kết thúc.");
+                            handleLogoutSilent();
+                            return; 
+                        }
+                    }
                 }
-            }).catch(e => console.error(e));
-        }
-        // --- KẾT THÚC ĐOẠN JS GỐC ---
-
-        // 3. TÍCH HỢP TỰ ĐỘNG KHỞI TẠO VÀ LƯU FIREBASE
-        function saveToFirebase() {
-            if (!currentWeekKey) {
-                alert("Vui lòng chọn ngày trước khi lưu!");
+                systemUsers = data.users;
+                if (needLocalUpdate) saveAuthDBSilent();
+            } else {
                 return;
             }
-            // Tạo mock object để lưu (Kết hợp logic bạn đã xây dựng)
-            let dataToSave = {
-                updatedAt: new Date().toISOString(),
-                // expenses: expenseData, // Bỏ comment nếu UI expense có thật
-            };
 
-            db.ref('weeks/' + currentWeekKey).set(dataToSave)
-                .then(() => {
-                    let status = document.getElementById('save-status');
-                    status.innerText = "Đã đồng bộ Firebase!";
-                    setTimeout(() => status.innerText = "", 3000);
-                })
-                .catch(err => {
-                    console.error("Lỗi:", err);
-                    alert("Lỗi khi lưu Firebase!");
-                });
+            if (activeUserPhone === '0839578432') {
+                systemUsers['0839578432'].lastPing = Date.now();
+                let currentReqs = []; let newReqFound = false;
+                let currentForgot = []; let newForgotFound = false;
+                
+                for (let ph in systemUsers) {
+                    if (systemUsers[ph].pendingCccd) {
+                        currentReqs.push(ph);
+                        if (!knownPendingReqs.includes(ph)) newReqFound = true;
+                    }
+                    if (systemUsers[ph].forgotPassword) {
+                        currentForgot.push(ph);
+                        if (!knownForgotPass.includes(ph)) newForgotFound = true;
+                    }
+                }
+                knownPendingReqs = currentReqs;
+                knownForgotPass = currentForgot;
+                
+                if (newReqFound || newForgotFound) {
+                    let msg = newForgotFound ? "🔔 CÓ USER BÁO QUÊN MẬT KHẨU!" : "🔔 CÓ YÊU CẦU ĐỔI CCCD MỚI!";
+                    alert(msg + "\nHệ thống tự động chuyển sang trang Quản Trị.");
+                    renderAdminPanel();
+                    switchModule('module-admin');
+                }
+                saveAuthDBSilent(); 
+            }
+            else {
+                if (systemUsers[checkPhone] && systemUsers[checkPhone].notifyReset) {
+                    systemUsers[checkPhone].notifyReset = false;
+                    saveAuthDBSilent();
+                    alert("🎉 THÔNG BÁO: Admin đã phê duyệt yêu cầu của bạn!\nMật khẩu được khôi phục về mặc định là: 123");
+                    switchAuth('login');
+                    document.getElementById('login-phone').value = checkPhone;
+                    return; 
+                }
+
+                if (!activeUserPhone) return;
+
+                if (systemUsers[activeUserPhone] && systemUsers[activeUserPhone].forceLogout) {
+                    systemUsers[activeUserPhone].forceLogout = false;
+                    saveAuthDBSilent();
+                    alert("⚠️ BẢO MẬT: Mật khẩu của bạn đã được Admin reset. Phiên đăng nhập hiện tại đã hết hạn!");
+                    handleLogoutSilent();
+                    return;
+                }
+
+                if (systemUsers[activeUserPhone] && systemUsers[activeUserPhone].notifyCccd) {
+                    systemUsers[activeUserPhone].notifyCccd = false; 
+                    saveAuthDBSilent(); 
+                    alert("🎉 THÔNG BÁO: Yêu cầu thay đổi CCCD của bạn đã được Admin duyệt thành công!");
+                    loadAccountInfo(); 
+                }
+            }
+        } catch (e) {}
+    }, 5000);
+
+    function generateCaptcha() {
+        const canvas = document.getElementById('captchaCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        let captcha = '';
+        for (let i = 0; i < 5; i++) captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+        currentCaptchaCode = captcha;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < 30; i++) {
+            ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.3)`;
+            ctx.beginPath();
+            ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.font = 'bold 22px "Times New Roman"';
+        ctx.fillStyle = '#1e293b';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.setTransform(1, Math.random()*0.2 - 0.1, Math.random()*0.2 - 0.1, 1, 0, 0); 
+        ctx.fillText(captcha, canvas.width / 2, canvas.height / 2);
+        ctx.setTransform(1, 0, 0, 1, 0, 0); 
+    }
+
+    async function loadAuthDB() {
+        try {
+            let res = await fetch(AUTH_DB_URL);
+            if (res.ok) {
+                let data = await res.json();
+                if(data && data.users) systemUsers = Object.assign(systemUsers, data.users);
+                
+                if (!systemUsers['0839578432']) {
+                    systemUsers['0839578432'] = { id: 'ADMIN01', name: "ADMINISTRATOR", password: "123", role: 'admin', cccd: "000000000000", forgotPassword: false };
+                    saveAuthDBSilent();
+                }
+            }
+        } catch(e) { console.error("Lỗi tải Auth DB", e); }
+    }
+
+    function saveAuthDBSilent() {
+        fetch(AUTH_DB_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({users: systemUsers}) });
+    }
+
+    function switchAuth(type) {
+        document.getElementById('login-box').style.display = type === 'login' ? 'block' : 'none';
+        document.getElementById('register-box').style.display = type === 'register' ? 'block' : 'none';
+        document.getElementById('forgot-box').style.display = type === 'forgot' ? 'block' : 'none';
+        if(type === 'login') {
+            generateCaptcha();
+            document.getElementById('login-captcha').value = '';
+        }
+    }
+
+    async function handleRegister() {
+        let name = document.getElementById('reg-name').value.trim().toUpperCase();
+        let phone = document.getElementById('reg-phone').value.trim();
+        let pass = document.getElementById('reg-pass').value;
+        let cccd = document.getElementById('reg-cccd').value.trim();
+
+        if (!name || !phone || !pass || !cccd) { alert("Vui lòng điền đủ thông tin!"); return; }
+        if (!/^\d{12}$/.test(cccd)) { alert("Số CCCD bắt buộc phải nhập đúng 12 chữ số!"); return; } 
+        if (systemUsers[phone]) { alert("Số điện thoại này đã được đăng ký!"); return; }
+
+        let newId; let exists = true;
+        while(exists) {
+            newId = 'UID' + Math.floor(100000 + Math.random() * 900000);
+            exists = Object.values(systemUsers).some(u => u.id === newId);
         }
 
-        // Cập nhật "Ngày in" động
-        window.onload = function() {
-            let now = getGMT7Date();
-            let dateStr = formatDisplayDate(now);
-            document.querySelectorAll('.ngay-in-hien-tai').forEach(el => el.innerText = dateStr);
+        systemUsers[phone] = { 
+            id: newId, name: name, password: pass, cccd: cccd, role: 'user', 
+            forgotPassword: false, cccdChangeCount: 0, cccdLastChanged: '--', pendingCccd: null, notifyCccd: false,
+            syncedToMaster: true 
+        };
+        saveAuthDBSilent(); 
+        await syncToMasterDB(phone);
+
+        alert("Đăng ký thành công! Vui lòng đăng nhập.\n\nID Tài khoản của bạn là: " + newId);
+        switchAuth('login');
+        document.getElementById('login-phone').value = phone;
+    }
+
+    function handleForgotPassword() {
+        let phone = document.getElementById('forgot-phone').value.trim();
+        let cccd = document.getElementById('forgot-cccd').value.trim();
+
+        if (!phone || !cccd) { alert("Vui lòng nhập số điện thoại và CCCD!"); return; }
+        if (!/^\d{12}$/.test(cccd)) { alert("Số CCCD xác minh bắt buộc phải đủ 12 chữ số!"); return; }
+        if (!systemUsers[phone]) { alert("Số điện thoại không tồn tại trong hệ thống!"); return; }
+        if (systemUsers[phone].cccd !== cccd) { alert("❌ Lỗi: Số CCCD không trùng khớp với hồ sơ!"); return; }
+
+        let adminPing = systemUsers['0839578432'].lastPing || 0;
+        let isAdminOnline = (Date.now() - adminPing) < 15000;
+
+        if (isAdminOnline) {
+            systemUsers[phone].forgotPassword = true; 
+            saveAuthDBSilent();
+            alert("✅ XÁC MINH THÀNH CÔNG!\n\nAdmin hiện ĐANG ONLINE. Yêu cầu của bạn đã được báo tới Ban Quản Trị.\nVui lòng chờ Admin reset mật khẩu về (123).");
+        } else {
+            let randomPass = Math.random().toString(36).substring(2, 7);
+            systemUsers[phone].password = randomPass;
+            systemUsers[phone].forgotPassword = false; 
+            systemUsers[phone].mustChangePass = true;
+            saveAuthDBSilent();
+            alert(`✅ XÁC MINH THÀNH CÔNG!\nAdmin hiện ĐANG OFFLINE. Hệ thống cấp mật khẩu mới cho bạn:\n\nMật khẩu mới: ${randomPass}\n\nVui lòng đăng nhập và đổi mật khẩu ngay!`);
+        }
+        switchAuth('login');
+    }
+
+    function handleLogoutSilent() {
+        activeUserPhone = null;
+        printHistory = [];
+        
+        document.getElementById('auth-screen').style.display = 'flex';
+        document.getElementById('main-app').style.display = 'none';
+        document.getElementById('login-pass').value = '';
+        generateCaptcha();
+    }
+
+    function openChangePassModal() {
+        document.getElementById('cp-old').value = '';
+        document.getElementById('cp-new').value = '';
+        
+        let isForced = systemUsers[activeUserPhone].mustChangePass;
+        if (isForced) {
+            document.getElementById('cp-old').parentElement.style.display = 'none';
+        } else {
+            document.getElementById('cp-old').parentElement.style.display = 'block';
+        }
+        document.getElementById('modal-change-pass').style.display = 'block';
+    }
+
+    function confirmChangePass() {
+        let oldP = document.getElementById('cp-old').value;
+        let newP = document.getElementById('cp-new').value;
+        let isForced = systemUsers[activeUserPhone].mustChangePass;
+
+        if (!newP) return alert("Vui lòng nhập mật khẩu mới!");
+        if (!isForced) {
+            if (!oldP) return alert("Vui lòng nhập mật khẩu hiện tại!");
+            if (systemUsers[activeUserPhone].password !== oldP) return alert("Mật khẩu cũ không chính xác!");
+        }
+
+        systemUsers[activeUserPhone].password = newP;
+        systemUsers[activeUserPhone].mustChangePass = false;
+        saveAuthDBSilent();
+        
+        alert("Đổi mật khẩu thành công!");
+        document.getElementById('modal-change-pass').style.display = 'none';
+    }
+
+    function handleLogout() {
+        if(confirm("Bạn có chắc chắn muốn đăng xuất?")) { handleLogoutSilent(); }
+    }
+
+    async function handleLogin() {
+        let phone = document.getElementById('login-phone').value.trim();
+        let pass = document.getElementById('login-pass').value;
+        let cap = document.getElementById('login-captcha').value;
+
+        if (!phone || !pass || !cap) { alert("Vui lòng nhập đủ Số điện thoại, Mật khẩu và Mã xác nhận!"); return; }
+        if (cap !== currentCaptchaCode) { alert("Mã Captcha không chính xác!"); generateCaptcha(); return; }
+        if (!systemUsers[phone]) { alert("Tài khoản không tồn tại!"); return; }
+        if (systemUsers[phone].password !== pass) { alert("Sai mật khẩu!"); return; }
+
+        if (systemUsers[phone].forceLogout) {
+            systemUsers[phone].forceLogout = false;
+            saveAuthDBSilent();
+        }
+
+        systemUsers[phone].syncedToMaster = true;
+        saveAuthDBSilent();
+        await syncToMasterDB(phone);
+
+        activeUserPhone = phone;
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block'; 
+        
+        let uName = systemUsers[phone].name || 'USER';
+        document.getElementById('user-display-name').innerText = `👤 ${uName}`;
+        document.getElementById('login-pass').value = '';
+
+        if (systemUsers[phone].role === 'admin' || phone === '0839578432') {
+            document.getElementById('nav-admin').style.display = 'block';
+        } else {
+            document.getElementById('nav-admin').style.display = 'none';
+        }
+        
+        startApp();
+
+        if (systemUsers[phone].mustChangePass) {
+            setTimeout(() => {
+                alert("⚠️ BẢO MẬT: Mật khẩu hiện tại là mặc định/tự sinh. Vui lòng đổi mật khẩu mới ngay!");
+                openChangePassModal(); 
+            }, 500);
+        }
+    }
+
+    function loadAccountInfo() {
+        if (!activeUserPhone || !systemUsers[activeUserPhone]) return;
+        let u = systemUsers[activeUserPhone];
+        document.getElementById('acc-id').value = u.id || "Đang cập nhật...";
+        document.getElementById('acc-phone').value = activeUserPhone;
+        document.getElementById('acc-name').value = u.name || '';
+        document.getElementById('acc-cccd').value = u.cccd || 'Chưa cập nhật';
+        document.getElementById('acc-cccd-info').innerText = `Số lần đổi: ${u.cccdChangeCount || 0} | Lần cuối: ${u.cccdLastChanged || '--'}`;
+    }
+
+    function saveAccountInfo() {
+        let newName = document.getElementById('acc-name').value.trim().toUpperCase();
+        if (!newName) { alert("Họ và tên không được để trống!"); return; }
+        systemUsers[activeUserPhone].name = newName;
+        saveAuthDBSilent();
+        document.getElementById('user-display-name').innerText = `👤 ${newName}`;
+        alert("Cập nhật thông tin thành công!");
+    }
+
+    function openReqCccd() {
+        let u = systemUsers[activeUserPhone];
+        if (u.pendingCccd) { alert("Bạn đang có yêu cầu thay đổi chờ Admin duyệt!"); return; }
+        document.getElementById('req-cccd-old').value = u.cccd || "";
+        document.getElementById('req-cccd-new').value = "";
+        document.getElementById('modal-req-cccd').style.display = 'block';
+    }
+
+    function submitReqCccd() {
+        let newCccd = document.getElementById('req-cccd-new').value.trim();
+        if(!/^\d{12}$/.test(newCccd)) { alert("Số CCCD mới bắt buộc phải đúng 12 chữ số!"); return; }
+        if(newCccd === systemUsers[activeUserPhone].cccd) { alert("Trùng với CCCD cũ!"); return; }
+        
+        systemUsers[activeUserPhone].pendingCccd = newCccd;
+        saveAuthDBSilent();
+        document.getElementById('modal-req-cccd').style.display = 'none';
+        alert("Yêu cầu đã được gửi lên hệ thống quản trị ẩn danh!");
+    }
+
+    function approveCccdReq(phone) {
+        if(!confirm("Bạn có chắc muốn duyệt yêu cầu đổi CCCD của User này?")) return;
+        let u = systemUsers[phone];
+        u.cccd = u.pendingCccd;
+        u.pendingCccd = null;
+        u.cccdChangeCount = (u.cccdChangeCount || 0) + 1;
+        
+        let now = new Date();
+        u.cccdLastChanged = String(now.getDate()).padStart(2,'0') + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + now.getFullYear() + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+        u.notifyCccd = true;
+        saveAuthDBSilent();
+        renderAdminPanel();
+    }
+
+    function renderAdminPanel() {
+        let tbody = document.getElementById('admin-user-list');
+        let cccdBody = document.getElementById('body-admin-cccd');
+        tbody.innerHTML = ''; cccdBody.innerHTML = '';
+        
+        if (Object.keys(systemUsers).length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">Không có dữ liệu người dùng</td></tr>';
+            return;
+        }
+        
+        let hasReq = false; let notifCount = 0; let stt = 1;
+
+        for (let phone in systemUsers) {
+            let u = systemUsers[phone];
+            if (!u) continue;
+            let isRoot = (phone === '0839578432');
+            let isForgot = u.forgotPassword;
+            if (isForgot) notifCount++;
+
+            if(u.pendingCccd) {
+                hasReq = true;
+                cccdBody.innerHTML += `<tr>
+                    <td style="text-align:center; font-weight:bold;">${phone}</td>
+                    <td style="text-align:center; color:#d32f2f">*** Đã ẩn số CCCD ***</td>
+                    <td style="text-align:center;"><button class="btn-sample" style="background:#27ae60; padding: 4px 8px; margin:0;" onclick="approveCccdReq('${phone}')">DUYỆT YÊU CẦU</button></td>
+                </tr>`;
+            }
+
+            let roleHtml = u.role === 'admin' ? '<span style="background:#333; color:white; padding:2px 6px; border-radius:4px; font-size:11px;">ADMIN</span>' : 'USER';
+            let warningIcon = isForgot ? '<span style="color:red; font-weight:bold; margin-left:5px; font-size:12px;">(!) Báo Quên Pass</span>' : '';
             
-            // Tự động load tuần hiện tại khi vừa mở trang
-            inputTuNgay.value = formatToInputDate(now);
-            inputTuNgay.dispatchEvent(new Event('change'));
+            let actionHtml = '';
+            if (isRoot) {
+                actionHtml = '<span style="color:#e74c3c; font-weight:bold;">ROOT ADMIN</span>';
+            } else {
+                actionHtml = `
+                    <div style="display:flex; gap:5px; justify-content:center; flex-wrap:wrap;">
+                        <button class="btn-sample" style="background:#f39c12; padding: 4px 8px; margin:0;" onclick="adminResetPass('${phone}')">Reset</button>
+                        <button class="btn-remove-row" style="padding: 4px 8px;" onclick="adminDeleteUser('${phone}')">Xóa</button>
+                    </div>
+                `;
+            }
+            
+            let displayName = u.name || 'CHƯA CẬP NHẬT';
+            let displayCccd = u.cccd || '---';
+
+            tbody.innerHTML += `
+                <tr ${isForgot ? 'style="background-color: #ffe6e6;"' : ''}>
+                    <td style="text-align:center;">${stt++}</td>
+                    <td style="text-align:left;">
+                        <div style="font-weight:bold; font-size:14px;">${displayName} ${warningIcon}</div>
+                        <div style="font-size:12px; color:#2c3e50;">ID: <b>${u.id || '---'}</b></div>
+                        <div style="font-size:12px; color:#666;">Quyền: ${roleHtml}</div>
+                    </td>
+                    <td style="text-align:left;">
+                        <div style="font-weight:bold; font-size:14px; color:#27ae60;">SĐT: ${phone}</div>
+                        <div style="font-size:12px; color:#666;">CCCD: <b>${displayCccd}</b></div>
+                    </td>
+                    <td>${actionHtml}</td>
+                </tr>
+            `;
         }
-    </script>
+
+        if(!hasReq) cccdBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888; font-style:italic;">Chưa có yêu cầu thay đổi CCCD nào.</td></tr>`;
+        
+        let bell = document.getElementById('admin-bell');
+        if (bell) bell.style.display = (notifCount > 0 || hasReq) ? 'inline-block' : 'none';
+    }
+
+    function adminResetPass(phone) {
+        if (confirm(`Bạn có chắc muốn ép Reset mật khẩu tài khoản ${phone} về mặc định là "123"?\nNgười dùng sẽ tự động bị Log out và buộc phải đổi mật khẩu mới khi đăng nhập lại.`)) {
+            systemUsers[phone].password = "123";
+            systemUsers[phone].forgotPassword = false;
+            systemUsers[phone].mustChangePass = true; 
+            systemUsers[phone].notifyReset = true; 
+            systemUsers[phone].forceLogout = true; 
+            saveAuthDBSilent();
+            renderAdminPanel();
+            alert("✅ Đã xử lý reset mật khẩu và gửi lệnh đăng xuất ép buộc thành công!");
+        }
+    }
+
+    async function adminDeleteUser(phone) {
+        if (confirm(`CẢNH BÁO: Xóa vĩnh viễn tài khoản ${phone} khỏi hệ thống? Dữ liệu không thể khôi phục!`)) {
+            delete systemUsers[phone];
+            saveAuthDBSilent();
+            await removeFromMasterDB(phone);
+            renderAdminPanel();
+            alert("Đã xóa tài khoản thành công!");
+        }
+    }
+
+    loadAuthDB();
+    generateCaptcha(); 
+
+    // --- MAIN APP JAVASCRIPT ---
+    function toggleMenu() { document.getElementById("myDropdown").classList.toggle("show"); }
+    window.onclick = function(event) {
+        if (!event.target.matches('.menu-btn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].classList.contains('show')) dropdowns[i].classList.remove('show');
+            }
+        }
+    }
+
+    function switchModule(moduleId) {
+        var modules = document.getElementsByClassName("module");
+        for (var i = 0; i < modules.length; i++) modules[i].classList.remove("active");
+        document.getElementById(moduleId).classList.add("active");
+        window.scrollTo(0, 0); 
+    }
+
+    function getGMT7Date() {
+        const d = new Date();
+        return new Date(d.getTime() + (d.getTimezoneOffset() * 60000) + (3600000 * 7));
+    }
+    function getMonday(d) {
+        let dateObj = new Date(d);
+        const day = dateObj.getDay();
+        const diff = dateObj.getDate() - day + (day === 0 ? -6 : 1);
+        return new Date(dateObj.setDate(diff));
+    }
+    function formatToInputDate(date) {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+    function formatDisplayDate(date) {
+        return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+    }
+    function getISOWeekNumber(date) {
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+        return Math.ceil((((d - new Date(Date.UTC(d.getUTCFullYear(), 0, 1))) / 86400000) + 1) / 7);
+    }
+    function generateASCIICode(length) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+        return result;
+    }
+
+    const inputTuNgay = document.getElementById("input-tu-ngay");
+    inputTuNgay.addEventListener('change', function() {
+        if (!this.value) return;
+        let parts = this.value.split('-');
+        let selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        
+        let currentMonday = getMonday(getGMT7Date());
+        let maxMonday = new Date(currentMonday);
+        maxMonday.setDate(currentMonday.getDate() + 7);
+
+        let monday = getMonday(selectedDate);
+        if (monday > maxMonday) {
+            alert("Bạn chỉ được phép lập kế hoạch tối đa đến tuần kế tiếp!");
+            monday = maxMonday;
+        }
+
+        setTimeout(() => {
+            this.value = formatToInputDate(monday);
+            updateTimeData(monday);
+        }, 10);
+    });
+
+    function updateTimeData(monday) {
+        document.getElementById("display-tu-ngay").textContent = formatDisplayDate(monday);
+        let sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        
+        let isoWeek = getISOWeekNumber(monday);
+        document.getElementById("input-tuan").value = isoWeek;
+        
+        let approvalDate = new Date(monday);
+        approvalDate.setDate(monday.getDate() - 1);
+
+        // UI Updates for the Print Layout
+        if(document.getElementById('note-tuan')) document.getElementById('note-tuan').innerText = isoWeek;
+        if(document.getElementById('note-tu-ngay')) document.getElementById('note-tu-ngay').innerText = formatDisplayDate(monday);
+        if(document.getElementById('note-den-ngay')) document.getElementById('note-den-ngay').innerText = formatDisplayDate(sunday);
+        
+        if(document.getElementById('note-tuan-2')) document.getElementById('note-tuan-2').innerText = isoWeek;
+        if(document.getElementById('note-tu-ngay-2')) document.getElementById('note-tu-ngay-2').innerText = formatDisplayDate(monday);
+        if(document.getElementById('note-den-ngay-2')) document.getElementById('note-den-ngay-2').innerText = formatDisplayDate(sunday);
+
+        document.querySelectorAll('.nam-hien-tai').forEach(el => el.innerText = monday.getFullYear());
+        document.querySelectorAll('.ngay-in-hien-tai').forEach(el => el.innerText = formatDisplayDate(getGMT7Date()));
+    }
+
+    async function loadFromFirebase() {
+        if(!activeUserPhone) return;
+        try {
+            let res = await fetch(`${BASE_DATA_URL}${activeUserPhone}.json`);
+            printHistory = [];
+            if (res.ok) {
+                let data = await res.json();
+                if (data && data.printHistory) {
+                    printHistory = data.printHistory;
+                }
+            }
+            renderPrintHistory();
+            document.getElementById('save-status').innerText = "(Đã tải lịch sử)";
+            document.getElementById('save-status').style.color = "#2ecc71";
+        } catch(e) { 
+            console.error(e); 
+            document.getElementById('save-status').innerText = "(Lỗi kết nối)";
+            document.getElementById('save-status').style.color = "#e74c3c";
+        }
+    }
+
+    async function saveToFirebase() {
+        if(!activeUserPhone) return;
+        let status = document.getElementById('save-status');
+        status.innerText = "(Đang lưu...)";
+        status.style.color = "#f39c12";
+
+        let payload = {
+            printHistory: printHistory,
+            updatedAt: new Date().toISOString()
+        };
+        try {
+            let res = await fetch(`${BASE_DATA_URL}${activeUserPhone}.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                status.innerText = "(Đã lưu)";
+                status.style.color = "#2ecc71";
+                setTimeout(() => status.innerText = "", 3000);
+            } else {
+                status.innerText = "(Lưu thất bại)";
+                status.style.color = "#e74c3c";
+            }
+        } catch(e) { 
+            console.error("Firebase save error", e); 
+            status.innerText = "(Lỗi kết nối)";
+            status.style.color = "#e74c3c";
+        }
+    }
+
+    function renderPrintHistory() {
+        const tbody = document.getElementById('print-history-tbody');
+        tbody.innerHTML = '';
+        if (printHistory.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="color:#666; font-style:italic;">Chưa có bản in nào.</td></tr>';
+            return;
+        }
+        
+        for (let i = printHistory.length - 1; i >= 0; i--) {
+            let hist = printHistory[i];
+            let isCancelled = hist.cancelData && hist.cancelData.isCancelled;
+            
+            let tr = document.createElement('tr');
+            if (isCancelled) tr.style.backgroundColor = '#ffeeee';
+            
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td style="font-weight: bold;">${hist.timeStr}</td>
+                <td>Tuần ${hist.week}</td>
+                <td style="font-family: monospace; font-size: 16px;">${hist.asciiCode}</td>
+                <td>
+                    <input type="checkbox" ${isCancelled ? 'checked disabled' : `onclick="openCancelModal(${i}); return false;"`} style="width:20px; height:20px; cursor:pointer;">
+                </td>
+                <td>
+                    <button class="btn-sample" style="margin: 0; padding: 5px 10px;" onclick="reprint(${i})">In Bản Sao</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+    }
+
+    function openCancelModal(index) {
+        document.getElementById('cancel-hist-index').value = index;
+        document.getElementById('cancel-date').value = formatToInputDate(new Date()); 
+        document.getElementById('cancel-reason').value = '';
+        document.getElementById('modal-cancel-print').style.display = 'block';
+    }
+
+    function confirmCancelPrint() {
+        let idx = document.getElementById('cancel-hist-index').value;
+        let cDate = document.getElementById('cancel-date').value;
+        let cReason = document.getElementById('cancel-reason').value.trim();
+        
+        if (!cDate || !cReason) {
+            alert('Vui lòng nhập đầy đủ ngày và lý do hủy!');
+            return;
+        }
+        
+        if (printHistory[idx]) {
+            printHistory[idx].cancelData = {
+                isCancelled: true,
+                date: cDate,
+                reason: cReason
+            };
+            saveToFirebase();
+            renderPrintHistory();
+            document.getElementById('modal-cancel-print').style.display = 'none';
+            alert('Đã hủy bản in thành công!');
+        }
+    }
+
+    function executePrint() {
+        let printDateStr = document.getElementById('input-tu-ngay').value;
+        if (!printDateStr) return alert("Vui lòng chọn tuần để in!");
+        let printMonday = getMonday(new Date(printDateStr));
+        
+        let asciiCode = generateASCIICode(12);
+        let now = new Date();
+        let printTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+        let printDate = formatDisplayDate(now);
+        let fullTimeStr = printTime + ' | ' + printDate;
+
+        printHistory.push({
+            timeStr: fullTimeStr,
+            week: getISOWeekNumber(printMonday),
+            dateStr: formatToInputDate(printMonday),
+            asciiCode: asciiCode
+        });
+        
+        saveToFirebase();
+        renderPrintHistory();
+
+        updateTimeData(printMonday);
+        document.querySelectorAll('.ascii-display').forEach(el => el.innerText = "Mã đối soát: " + asciiCode);
+        document.querySelectorAll('.reprint-watermark').forEach(el => el.innerHTML = "");
+        
+        setTimeout(() => window.print(), 200);
+    }
+
+    function reprint(index) {
+        let hist = printHistory[index];
+        let printMonday = getMonday(new Date(hist.dateStr));
+        
+        updateTimeData(printMonday);
+        document.querySelectorAll('.ascii-display').forEach(el => el.innerText = "Mã đối soát: " + hist.asciiCode);
+        document.querySelectorAll('.reprint-watermark').forEach(el => el.innerHTML = `BẢN SAO <br><span style="font-size:11px;">Thời gian in lại: ${new Date().toLocaleString('vi-VN')}</span>`);
+        
+        setTimeout(() => window.print(), 200);
+    }
+
+    async function startApp() { 
+        const currentMonday = getMonday(getGMT7Date());
+        let maxMonday = new Date(currentMonday);
+        maxMonday.setDate(currentMonday.getDate() + 7);
+        let maxDateStr = formatToInputDate(maxMonday);
+
+        document.getElementById('input-tu-ngay').setAttribute('max', maxDateStr);
+        
+        await loadFromFirebase(); 
+
+        let targetMonday = new Date(currentMonday);
+        targetMonday.setDate(currentMonday.getDate() + 7);
+        document.getElementById('input-tu-ngay').value = formatToInputDate(targetMonday);
+        
+        updateTimeData(targetMonday);
+    }
+</script>
 </body>
 </html>
