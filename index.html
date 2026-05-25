@@ -181,39 +181,28 @@
         #print-area { display: none; }
         @media print {
             body * { visibility: hidden; }
-            .navbar, .container, .modal, .modal-overlay, .auth-wrapper { display: none !important; }
+            .navbar, .container, .modal, .auth-wrapper { display: none !important; }
             #print-area, #print-area * { visibility: visible; }
             #print-area { 
                 display: block; 
                 position: absolute; 
                 left: 0; 
                 top: 0; 
-                width: 100%; 
+                width: 148mm; /* Chiều rộng A5 */
+                height: 210mm; /* Chiều cao A5 */
                 font-family: "Times New Roman", Times, serif; 
-                font-size: 13px; 
+                font-size: 11px; /* Giảm font để vừa A5 */
                 color: #000; 
-                background: #fff; 
-                line-height: 1.3;
+                background: #fff;
+                overflow: hidden;
             }
-            .print-container {
-                padding: 0 10mm; 
+            .phieu-table { margin-bottom: 10px !important; }
+            .dotted-line { height: 16px !important; }
+            @page { 
+                size: A5 landscape; 
+                margin: 5mm; 
             }
-            
-            .p-table-kehoach { width: 100%; border-collapse: collapse; margin: 5px 0; border-top: 1.5px dashed #000; border-bottom: 1.5px dashed #000; }
-            .p-table-kehoach th, .p-table-kehoach td { border: none; padding: 4px 2px; text-align: center; }
-            .p-table-kehoach th { border-bottom: 1px dashed #000; }
-            
-            .p-table-diengiai { width: 100%; border-collapse: collapse; margin-bottom: 5px; table-layout: auto; }
-            .p-table-diengiai td { padding: 4px; border: none; }
-            
-            .p-fund-table { width: 100%; border-collapse: collapse; margin: 8px 0; }
-            .p-fund-table th, .p-fund-table td { border: 1px solid #000; padding: 4px; text-align: center; font-size: 12px; }
-
-            /* Ép trình duyệt sử dụng khổ A5 Nằm ngang */
-            @page { size: A5 landscape; margin: 5mm; }
         }
-        /* [KẾT THÚC SỬA] */
-        /* [KẾT THÚC SỬA] */
     </style>
 </head>
 <body>
@@ -464,6 +453,26 @@
 </div>
 
 <div id="print-area">
+    <div style="display: flex; flex-direction: column; height: 100%;">
+        <table class="phieu-table" style="margin-bottom: 5px !important;">
+            <tr><td colspan="3" class="header-cell"><div class="phieu-title">PHIẾU THÔNG TIN TÚI ĐỰNG - LIÊN 1</div></td></tr>
+            <tr>
+                <td class="col-info">Tuần: <span id="note-tuan">...</span> | MS: <span class="ms-display">-----</span><br>Từ: <span id="note-tu-ngay">...</span></td>
+                <td class="col-docs">Lưu trữ: <div class="dotted-line"></div><div class="dotted-line"></div></td>
+                <td class="col-extra">Thêm: <div class="dotted-line"></div><div class="dotted-line"></div></td>
+            </tr>
+        </table>
+        <table class="phieu-table" style="margin-bottom: 5px !important;">
+            <tr><td colspan="3" class="header-cell"><div class="phieu-title">PHIẾU THÔNG TIN TÚI ĐỰNG - LIÊN 2</div></td></tr>
+            <tr>
+                <td class="col-info">Tuần: <span id="note-tuan-2">...</span> | MS: <span class="ms-display">-----</span><br>Từ: <span id="note-tu-ngay-2">...</span></td>
+                <td class="col-docs">Lưu trữ: <div class="dotted-line"></div><div class="dotted-line"></div></td>
+                <td class="col-extra">Thêm: <div class="dotted-line"></div><div class="dotted-line"></div></td>
+            </tr>
+        </table>
+        <div class="ban-sao-badge" style="text-align:center; font-weight:bold; color:red;"></div>
+    </div>
+</div>
     <table class="phieu-table">
         <tr>
             <td colspan="3" class="header-cell">
@@ -1260,38 +1269,23 @@
 
     function executePrint() {
         let printDateStr = document.getElementById('input-tu-ngay').value;
-        if (!printDateStr) return alert("Vui lòng chọn tuần để in!");
+        if (!printDateStr) return alert("Vui lòng chọn tuần!");
         
-        // Parse ngày an toàn tránh lỗi múi giờ
-        let parts = printDateStr.split('-');
-        let printMonday = getMonday(new Date(parts[0], parts[1] - 1, parts[2]));
+        let msInput = document.getElementById('input-ms');
+        let msValue = msInput ? msInput.value.trim() : '';
+        if (!msValue || msValue.length !== 5) return alert("Nhập 5 số MS!");
         
-        let asciiCode = generateASCIICode(12);
-        let ms = generateUniqueMS(); 
+        let printMonday = getMonday(new Date(printDateStr));
+        let ms = msValue;
         let now = new Date();
-        let printTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
-        let printDate = formatDisplayDate(now);
-        let fullTimeStr = printTime + ' | ' + printDate;
-
-        if (!Array.isArray(printHistory)) {
-            printHistory = Object.values(printHistory || {});
-        }
-
-        printHistory.push({
-            timeStr: fullTimeStr,
-            week: getISOWeekNumber(printMonday),
-            dateStr: formatToInputDate(printMonday),
-            asciiCode: asciiCode,
-            ms: ms
-        });
-        
-        saveToFirebase();
-        renderPrintHistory();
 
         updateTimeData(printMonday);
-        updateDOMForPrint(asciiCode, ms, false);
+        updateDOMForPrint(generateASCIICode(12), ms, false);
         
-        setTimeout(() => window.print(), 500);
+        // Timeout ngắn để render kịp DOM
+        setTimeout(() => {
+            window.print();
+        }, 300);
     }
 
     function reprint(index) {
