@@ -322,10 +322,6 @@
             <label>Tuần ISO:</label>
             <input type="text" id="input-tuan" readonly class="readonly-input">
         </div>
-        <div class="form-group">
-            <label>Nhập Mã Số (MS) 5 số:</label>
-            <input type="text" id="input-ms" placeholder="VD: 28597" maxlength="5" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-        </div>
         
         <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
             <button class="btn-save" style="background-color: #3498db; width: auto; padding: 12px 25px; margin: 0;" onclick="executePrint()">🖨️ TẠO BẢN IN PHIẾU (Ctrl+P)</button>
@@ -1246,16 +1242,10 @@
         let printDateStr = document.getElementById('input-tu-ngay').value;
         if (!printDateStr) return alert("Vui lòng chọn tuần để in!");
         
-        let msInput = document.getElementById('input-ms');
-        let msValue = msInput ? msInput.value.trim() : '';
-        if (!msValue || msValue.length !== 5) {
-            return alert("Vui lòng nhập đúng 5 số cho Mã Số (MS) trước khi in!");
-        }
-        
         let printMonday = getMonday(new Date(printDateStr));
         
         let asciiCode = generateASCIICode(12);
-        let ms = msValue;
+        let ms = generateUniqueMS(); // Hệ thống tự động sinh ra mã MS 5 số không trùng
         let now = new Date();
         let printTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
         let printDate = formatDisplayDate(now);
