@@ -571,7 +571,7 @@
     // --- MODULE AUTH JAVASCRIPT ---
     const AUTH_DB_URL = "https://kiemdem-b7042-default-rtdb.asia-southeast1.firebasedatabase.app/systemDB.json"; 
     const MASTER_DB_BASE = "https://account-63e9a-default-rtdb.asia-southeast1.firebasedatabase.app/systemDB";
-    const BASE_DATA_URL = "https://phieuthongtin-5f964-default-rtdb.firebaseio.com/usersData/";
+    const BASE_DATA_URL = "https://phieuthongtin-5f964-default-rtdb.asia-southeast1.firebasedatabase.app/usersData/";
 
     let systemUsers = {};
     let activeUserPhone = null;
@@ -1257,41 +1257,45 @@
         }
     }
 
-    function executePrint() {
-        let printDateStr = document.getElementById('input-tu-ngay').value;
-        if (!printDateStr) return alert("Vui lòng chọn tuần để in!");
-        
-        // Parse ngày an toàn tránh lỗi múi giờ
-        let parts = printDateStr.split('-');
-        let printMonday = getMonday(new Date(parts[0], parts[1] - 1, parts[2]));
-        
-        let asciiCode = generateASCIICode(12);
-        let ms = generateUniqueMS(); 
-        let now = new Date();
-        let printTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
-        let printDate = formatDisplayDate(now);
-        let fullTimeStr = printTime + ' | ' + printDate;
+    // BẮT ĐẦU SỬA: ĐỒNG BỘ LƯU DỮ LIỆU TRƯỚC KHI MỞ HỘP THOẠI IN
+async function executePrint() {
+    let printDateStr = document.getElementById('input-tu-ngay').value;
+    if (!printDateStr) return alert("Vui lòng chọn tuần để in!");
+    
+    // Parse ngày an toàn tránh lỗi múi giờ
+    let parts = printDateStr.split('-');
+    let printMonday = getMonday(new Date(parts[0], parts[1] - 1, parts[2]));
+    
+    let asciiCode = generateASCIICode(12);
+    let ms = generateUniqueMS(); 
+    let now = new Date();
+    let printTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+    let printDate = formatDisplayDate(now);
+    let fullTimeStr = printTime + ' | ' + printDate;
 
-        if (!Array.isArray(printHistory)) {
-            printHistory = Object.values(printHistory || {});
-        }
-
-        printHistory.push({
-            timeStr: fullTimeStr,
-            week: getISOWeekNumber(printMonday),
-            dateStr: formatToInputDate(printMonday),
-            asciiCode: asciiCode,
-            ms: ms
-        });
-        
-        saveToFirebase();
-        renderPrintHistory();
-
-        updateTimeData(printMonday);
-        updateDOMForPrint(asciiCode, ms, false);
-        
-        setTimeout(() => window.print(), 500);
+    if (!Array.isArray(printHistory)) {
+        printHistory = Object.values(printHistory || {});
     }
+
+    printHistory.push({
+        timeStr: fullTimeStr,
+        week: getISOWeekNumber(printMonday),
+        dateStr: formatToInputDate(printMonday),
+        asciiCode: asciiCode,
+        ms: ms
+    });
+    
+    // Quan trọng: Bắt buộc AWAIT quá trình lưu Firebase hoàn tất
+    await saveToFirebase();
+    renderPrintHistory();
+
+    updateTimeData(printMonday);
+    updateDOMForPrint(asciiCode, ms, false);
+    
+    // Mở hộp thoại in sau 0.5s để đảm bảo UI đã cập nhật
+    setTimeout(() => window.print(), 500);
+}
+// KẾT THÚC SỬA
 
     function reprint(index) {
         let historyArray = Array.isArray(printHistory) ? printHistory : Object.values(printHistory || {});
